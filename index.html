@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Social Task Hub</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #9d50bb 0%, #6e48aa 50%, #2980b9 100%);
+      --btn-gradient: linear-gradient(90deg, #c026d3 0%, #2563eb 100%);
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --purple-glow: rgba(157, 80, 187, 0.2);
+      --bg-color: #fcfdff;
+    }
+
+    html, body {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      background-color: #F8FAFC;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+    }
+
+    * { box-sizing: border-box; outline: none; }
+
+    .app-scroll-container {
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+      overscroll-behavior-y: contain;
+    }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .app-card {
+      background: #FFFFFF;
+      border-radius: 24px;
+      border: 1px solid #EEF2F6;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+    }
+
+    .app-card-sm {
+      background: #FFFFFF;
+      border-radius: 16px;
+      border: 1px solid #EEF2F6;
+    }
+
+    .app-input {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 14px;
+    }
+    .app-input:focus {
+      background: #FFFFFF;
+      border-color: #4F46E5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .app-btn {
+      background: #F1F5F9;
+      border: 1px solid #E2E8F0;
+      border-radius: 14px;
+    }
+    .app-btn:active { transform: scale(0.96); }
+
+    .grad-primary {
+      background: linear-gradient(135deg, #4F46E5 0%, #3730A3 100%);
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
+    }
+    .grad-primary:active { transform: scale(0.96); }
+
+    .stat-blue-card { background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%); }
+    .stat-purple-card { background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%); }
+
+    .vip-hero-banner {
+      background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
+      border-radius: 26px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 28px -6px rgba(79, 70, 229, 0.35);
+    }
+
+    .pro-glass-tile {
+      background: #FFFFFF;
+      border: 1px solid #F1F5F9;
+      border-radius: 18px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .pro-glass-tile:active { transform: scale(0.97); background: #F8FAFC; }
+
+    .cyber-live-display {
+      background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #0F172A 100%);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 24px -4px rgba(79, 70, 229, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .brand-yt { background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%); color: #FFFFFF; }
+    .brand-bili { background: linear-gradient(135deg, #FB7299 0%, #E0567E 100%); color: #FFFFFF; }
+    .brand-tg { background: linear-gradient(135deg, #2AABEE 0%, #229ED9 100%); color: #FFFFFF; }
+    .brand-fb { background: linear-gradient(135deg, #1877F2 0%, #0c5dc9 100%); color: #FFFFFF; }
+    .brand-ig { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285AEB 90%); color: #FFFFFF; }
+    .brand-tt { background: linear-gradient(135deg, #25F4EE 0%, #000000 50%, #FE2C55 100%); color: #FFFFFF; }
+    .brand-x  { background: linear-gradient(135deg, #1DA1F2 0%, #14171A 100%); color: #FFFFFF; }
+    .brand-reddit { background: linear-gradient(135deg, #FF4500 0%, #CC3700 100%); color: #FFFFFF; }
+    .brand-discord { background: linear-gradient(135deg, #5865F2 0%, #404EED 100%); color: #FFFFFF; }
+    .brand-imo { background: linear-gradient(135deg, #1D58B4 0%, #133D80 100%); color: #FFFFFF; }
+    .brand-bigo { background: #FFFFFF; color: #00D5D5; border: 1.5px solid #00D5D5; }
+    .brand-likee { background: linear-gradient(135deg, #9C27B0 0%, #FF2A6D 50%, #FFB300 100%); color: #FFFFFF; }
+    .brand-snap { background: linear-gradient(135deg, #FFFC00 0%, #FFCC00 100%); color: #000000; }
+    .brand-threads { background: linear-gradient(135deg, #222222 0%, #000000 100%); color: #FFFFFF; }
+    .brand-pinterest { background: linear-gradient(135deg, #E60023 0%, #B8001C 100%); color: #FFFFFF; }
+    .brand-twitch { background: linear-gradient(135deg, #9146FF 0%, #7020E0 100%); color: #FFFFFF; }
+    .brand-kick { background: linear-gradient(135deg, #53FC18 0%, #38B00F 100%); color: #000000; }
+    .brand-whatsapp { background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: #FFFFFF; }
+    .brand-linkedin { background: linear-gradient(135deg, #0A66C2 0%, #084B8A 100%); color: #FFFFFF; }
+    .brand-sharechat { background: linear-gradient(135deg, #38A169 0%, #276749 100%); color: #FFFFFF; }
+    .brand-moj { background: linear-gradient(135deg, #FF3366 0%, #CC1F49 100%); color: #FFFFFF; }
+    .brand-kwai { background: linear-gradient(135deg, #FF5000 0%, #CC3F00 100%); color: #FFFFFF; }
+    .brand-vk { background: linear-gradient(135deg, #0077FF 0%, #0055B3 100%); color: #FFFFFF; }
+    .brand-rdt { background: linear-gradient(135deg, #FF2442 0%, #D3112E 100%); color: #FFFFFF; }
+    .brand-lem { background: linear-gradient(135deg, #FFE500 0%, #FFAE00 100%); color: #000000; }
+    .brand-bereal { background: linear-gradient(135deg, #333333 0%, #111111 100%); color: #FFFFFF; }
+
+    .count-badge-bubble {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 999px;
+      line-height: 1.3;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+
+<body class="flex justify-center items-center">
+
+  <div id="exitToast" class="hidden fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-md text-white px-5 py-2 rounded-full text-[11px] font-bold z-50 shadow-xl border border-white/10">Press back again to exit</div>
+
+  <!-- MAIN APP WRAPPER -->
+  <div class="w-full sm:max-w-[430px] h-full sm:h-[900px] bg-[#F8FAFC] sm:rounded-[44px] shadow-2xl overflow-hidden flex flex-col relative border-0 sm:border sm:border-slate-200">
+    
+    <!-- AUTH SCREEN -->
+    <div id="view-auth" class="hidden absolute inset-0 z-40 bg-[#F8FAFC] flex flex-col justify-between p-6 overflow-y-auto no-scrollbar">
+      <div class="my-auto space-y-6">
+        <div class="text-center space-y-2">
+          <div class="w-16 h-16 rounded-3xl grad-primary text-white flex items-center justify-center text-2xl mx-auto shadow-xl">
+            <i class="fa-solid fa-layer-group"></i>
+          </div>
+          <h2 class="text-xl font-black text-slate-900 tracking-tight">Social Task Hub</h2>
+          <p class="text-xs font-semibold text-slate-400">Earn Rewards & Promote on 26+ Social Platforms</p>
+        </div>
+
+        <div class="app-card p-1 flex bg-slate-100/70 border border-slate-200">
+          <button onclick="switchAuthTab('login')" id="tabBtnLogin" class="flex-1 py-2.5 rounded-2xl text-xs font-extrabold grad-primary text-white shadow transition">
+            Sign In
+          </button>
+          <button onclick="switchAuthTab('signup')" id="tabBtnSignup" class="flex-1 py-2.5 rounded-2xl text-xs font-bold text-slate-500 hover:text-slate-800 transition">
+            Create Account
+          </button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="formLogin" onsubmit="handleLoginSubmit(event)" class="space-y-3.5">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Email Address</label>
+            <div class="relative">
+              <input type="email" id="loginUsername" required autocomplete="email" placeholder="you@example.com" class="w-full app-input px-3.5 py-2.5 pl-9 text-xs font-semibold text-slate-900" />
+              <i class="fa-solid fa-at absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Password</label>
+            <div class="relative">
+              <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full app-input px-3.5 py-2.5 pl-9 text-xs font-semibold text-slate-900" />
+              <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+            </div>
+          </div>
+
+          <div class="flex justify-end -mt-1">
+            <button type="button" onclick="openPasswordReset()" class="text-[10px] font-bold text-indigo-600 hover:underline">Forgot password?</button>
+          </div>
+
+          <button type="submit" class="w-full py-3.5 grad-primary text-white rounded-xl text-xs font-black shadow-md active:scale-95 transition flex items-center justify-center gap-2">
+            <span>Sign In to Account</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+          </button>
+        </form>
+
+        <!-- Signup Form -->
+        <form id="formSignup" onsubmit="handleSignupSubmit(event)" class="hidden space-y-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Full Name</label>
+            <input type="text" id="signupFullName" required placeholder="Real Name" class="w-full app-input px-3.5 py-2 text-xs font-semibold text-slate-900" />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Email Address</label>
+            <input type="email" id="signupEmail" required autocomplete="email" placeholder="you@example.com" class="w-full app-input px-3.5 py-2 text-xs font-semibold text-slate-900" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Username</label>
+              <input type="text" id="signupUsername" required pattern="[A-Za-z0-9_]{3,24}" placeholder="handle" class="w-full app-input px-3 py-2 text-xs font-semibold text-slate-900" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Country</label>
+              <select id="signupCountry" required class="w-full app-input px-3 py-2 text-xs font-bold text-slate-800"></select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Password</label>
+            <input type="password" id="signupPassword" required minlength="6" autocomplete="new-password" placeholder="Min 6 characters" class="w-full app-input px-3.5 py-2 text-xs font-semibold text-slate-900" />
+          </div>
+
+          <div class="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-[10px] font-bold text-indigo-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-gift text-xs text-indigo-600"></i> New accounts receive <b>300 Free PTS</b> instantly!
+          </div>
+
+          <button type="submit" class="w-full py-3 grad-primary text-white rounded-xl text-xs font-black shadow-md active:scale-95 transition flex items-center justify-center gap-2">
+            <span>Create & Join Hub</span> <i class="fa-solid fa-user-plus text-xs"></i>
+          </button>
+        </form>
+      </div>
+
+      <p class="text-[10px] text-center font-semibold text-slate-400 py-2">
+        Powered by Supabase Engine & PostgreSQL
+      </p>
+    </div>
+
+    <!-- LOCKED TOP LIVE DISPLAY -->
+    <div id="homeFixedHeader" class="w-full px-4 pt-3 pb-2 bg-[#F8FAFC] shrink-0 z-30">
+      <div class="w-full cyber-live-display py-2.5 px-3.5 flex items-center justify-between gap-2.5">
+        <div class="flex items-center gap-2 min-w-0 flex-1">
+          <span class="flex h-2 w-2 relative shrink-0">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_8px_#10B981]"></span>
+          </span>
+          <div class="min-w-0 flex-1">
+            <p id="liveTickerText" class="text-[11px] font-black text-white truncate tracking-wide transition-all duration-300">
+              <span class="text-cyan-400 font-extrabold">Tech Review Bangla</span> Subscribed Done ✓
+            </p>
+          </div>
+        </div>
+        <span class="text-[9px] font-black uppercase tracking-wider bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 px-2 py-0.5 rounded-full shrink-0 shadow-sm">
+          LIVE
+        </span>
+      </div>
+    </div>
+
+    <!-- MAIN APP CONTENT AREA -->
+    <main class="flex-1 app-scroll-container no-scrollbar px-4 pt-1 pb-6 space-y-4" id="mainContainer">
+
+      <!-- 1. HOME SCREEN -->
+      <section id="view-home" class="screen-view space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="stat-blue-card p-4 rounded-2xl text-white flex flex-col justify-between h-[120px]">
+            <div class="flex justify-between items-start">
+              <span class="text-[11px] font-bold text-blue-100">My Task Limit</span>
+              <i class="fa-solid fa-layer-group text-xs text-white/60"></i>
+            </div>
+            <div>
+              <span class="text-2xl font-black tracking-tight" id="statTaskLimit">0 / 5</span>
+            </div>
+            <button onclick="openModal('upgradeModal')" class="w-full py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-[11px] font-bold transition">
+              Upgrade Limit
+            </button>
+          </div>
+
+          <div class="stat-purple-card p-4 rounded-2xl text-white flex flex-col justify-between h-[120px]">
+            <div class="flex justify-between items-start">
+              <span class="text-[11px] font-bold text-pink-100">Active Tasks</span>
+              <i class="fa-solid fa-list-check text-xs text-white/60"></i>
+            </div>
+            <div>
+              <span class="text-2xl font-black tracking-tight" id="statTotalActiveTasks">0</span>
+            </div>
+            <div class="flex items-center gap-1 text-[10px] font-bold text-pink-100">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Available to Work
+            </div>
+          </div>
+        </div>
+
+        <div class="app-card p-4">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <h4 class="text-xs font-extrabold text-slate-900 tracking-tight">Platform Categories</h4>
+              <p class="text-[10px] text-slate-400 font-semibold">26+ Social media channels & apps</p>
+            </div>
+            <button onclick="switchTab('tasks')" class="text-[11px] font-bold text-indigo-600 hover:underline">Explore All</button>
+          </div>
+          <div class="grid grid-cols-4 gap-2.5 text-center" id="home4ColumnPlatformGrid"></div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-2.5 px-1">
+            <h4 class="text-xs font-extrabold text-slate-900 tracking-tight">Available Tasks Preview</h4>
+            <button onclick="switchTab('tasks')" class="text-[11px] font-bold text-indigo-600 hover:underline">See All</button>
+          </div>
+          <div id="homeTaskListContainer" class="space-y-2.5"></div>
+        </div>
+      </section>
+
+      <!-- 2. TASKS HUB SCREEN -->
+      <section id="view-tasks" class="screen-view hidden space-y-3.5 pt-2">
+        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1" id="filterPillsRow"></div>
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input id="taskSearchInputV7" oninput="applyTaskControlsV7()" type="search" placeholder="Search tasks, platform or account…" class="w-full app-input pl-8 pr-3 py-2.5 text-xs font-semibold" autocomplete="off">
+          </div>
+          <select id="taskSortSelectV7" onchange="applyTaskControlsV7()" class="app-input px-2.5 py-2 text-[10px] font-black w-[112px]">
+            <option value="newest">Newest</option><option value="reward">Reward</option><option value="slots">Most slots</option>
+          </select>
+        </div>
+
+        <div class="flex justify-between items-center text-[11px] font-bold text-slate-400 px-1">
+          <span>Active Tasks Available (<span id="taskCountBadge" class="text-indigo-600 font-extrabold">0</span>)</span>
+          <span class="text-emerald-600 flex items-center gap-1"><i class="fa-solid fa-shield-halved"></i> Anti-Duplicate Protection</span>
+        </div>
+
+        <div id="fullTasksHubList" class="space-y-2.5"></div>
+      </section>
+
+      <!-- 3. CREATE TASK SCREEN -->
+      <section id="view-create" class="screen-view hidden space-y-4 pt-2">
+        <div class="app-card p-5 space-y-4">
+          <div class="flex items-center gap-2.5 pb-2 border-b border-slate-100">
+            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm font-bold">
+              <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900">Create New Promotion Task</h3>
+              <p class="text-[10px] font-medium text-slate-400">Choose from 26+ platforms & action categories</p>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-2">1. Choose Platform (26+ Supported)</label>
+            <div class="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto no-scrollbar p-1" id="createPlatGroup"></div>
+          </div>
+
+          <form onsubmit="handleTaskSubmit(event)" class="space-y-3.5">
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="block text-[11px] font-bold text-slate-600">2. Task High-Demand Category</label>
+                <span class="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md" id="currentPlatNameBadge">YouTube</span>
+              </div>
+              <select id="inputTaskAction" class="w-full app-input px-3.5 py-2.5 text-xs font-bold text-slate-800"></select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">3. Target Profile / Post / Group Link</label>
+              <input type="url" required id="inputTargetUrl" placeholder="https://..." class="w-full app-input px-3.5 py-2.5 text-xs font-semibold text-slate-800 placeholder-slate-400" />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">4. Required Quantity (Workers)</label>
+              <input type="number" id="inputQuantity" value="100" min="10" max="5000" oninput="calcCost()" class="w-full app-input px-3.5 py-2.5 text-xs font-black text-slate-900" />
+            </div>
+
+            <div class="p-3.5 bg-indigo-50/60 border border-indigo-100 rounded-xl flex justify-between items-center">
+              <div>
+                <p class="text-[11px] font-bold text-indigo-900">Total Cost</p>
+                <p class="text-[10px] font-medium text-slate-500">1 Request = 1 Point</p>
+              </div>
+              <div class="text-right font-black text-indigo-600">
+                <span id="costNumber" class="text-lg">100</span> <span class="text-xs">PTS</span>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-3.5 grad-primary text-white rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Publish Promotion Task
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- 4. PROOF REVIEW SCREEN -->
+      <section id="view-my-tasks" class="screen-view hidden space-y-4 pt-2">
+        <div class="app-card p-4 space-y-3">
+          <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900">Task Proof Submissions</h3>
+              <p class="text-[10px] font-semibold text-slate-400">Review submitted screenshots & approve points</p>
+            </div>
+            <span class="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full font-black" id="reviewCountBadge">0 Pending</span>
+          </div>
+          <div id="proofSubmissionsContainer" class="space-y-3"></div>
+        </div>
+      </section>
+
+      <!-- 5. CHAT SCREEN -->
+      <section id="view-chat" class="screen-view hidden flex flex-col space-y-3 pt-2">
+        <div class="app-card p-1 flex">
+          <button onclick="toggleChatMode('direct', this)" id="btnTabDirect" class="flex-1 py-2 rounded-xl text-xs font-bold grad-primary text-white transition flex items-center justify-center gap-1.5">
+            <i class="fa-regular fa-comments"></i> Direct Messages
+          </button>
+          <button onclick="toggleChatMode('global', this)" id="btnTabGlobal" class="flex-1 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 transition flex items-center justify-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Local Live Chat
+          </button>
+        </div>
+
+        <div id="subViewDirectMessages" class="space-y-2.5">
+          <div onclick="openDirectChatFromList('support_desk')" class="app-card p-3.5 flex items-center justify-between cursor-pointer hover:border-indigo-200 active:scale-[0.99] transition">
+            <div class="flex items-center gap-3">
+              <div class="relative">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="w-11 h-11 rounded-2xl object-cover ring-2 ring-indigo-50" />
+                <span class="w-3 h-3 bg-emerald-500 rounded-full border-2 border-white absolute -bottom-0.5 -right-0.5"></span>
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h5 class="text-xs font-extrabold text-slate-900 leading-tight">@support_desk</h5>
+                </div>
+                <p class="text-[11px] font-semibold text-slate-400 mt-0.5">Official Support Channel</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Active</span>
+          </div>
+        </div>
+
+        <div id="subViewGlobalLiveChat" class="hidden app-card overflow-hidden flex flex-col h-[480px]">
+          <div class="px-4 py-2.5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+              <span class="text-xs font-extrabold text-slate-800">Community Live Chat</span>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 bg-slate-200/70 text-slate-700 rounded-full">Supabase Realtime</span>
+          </div>
+
+          <div id="liveMessageFeed" class="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs"></div>
+
+          <form onsubmit="handleSendGlobalMsg(event)" class="p-2.5 border-t border-slate-100 bg-white flex items-center gap-2">
+            <input type="text" id="inputGlobalMsg" placeholder="Type a message..." class="flex-1 app-input px-3.5 py-2 text-xs font-semibold focus:outline-none" />
+            <button type="submit" class="w-9 h-9 grad-primary text-white rounded-xl flex items-center justify-center transition active:scale-95">
+              <i class="fa-solid fa-paper-plane text-xs"></i>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- 6. PROFILE SCREEN -->
+      <section id="view-profile" class="screen-view hidden space-y-3 pt-1">
+        <div class="vip-hero-banner p-4 text-white cursor-pointer" onclick="openSelfProfileModal()">
+          <div class="flex items-center justify-between">
+            <div id="profileBadgeTag"></div>
+            <button onclick="event.stopPropagation(); openSelfProfileModal()" class="w-8 h-8 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-xs active:scale-90 transition">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3.5 mt-3">
+            <div class="relative shrink-0">
+              <img id="profileCardAvatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=180&auto=format&fit=crop&q=80" class="w-16 h-16 rounded-2xl object-cover ring-2 ring-white/40 shadow-md" />
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5">
+                <h3 id="profileNameDisplay" class="text-sm font-black truncate leading-tight">User</h3>
+                <span id="nameVerifiedIcon"></span>
+              </div>
+              <p id="profileHandleDisplay" class="text-[11px] font-bold text-indigo-100 opacity-90 mt-0.5">@handle</p>
+              <p id="profileLocationDisplay" class="text-[10px] font-semibold text-emerald-200 mt-1 flex items-center gap-1 truncate">
+                <i class="fa-solid fa-location-dot text-[9px]"></i> <span id="userLocationText">Bangladesh</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div class="pro-glass-tile p-2.5 text-center cursor-pointer" onclick="switchTab('my-tasks')">
+            <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-1 text-[11px]"><i class="fa-solid fa-clipboard-check"></i></div>
+            <p id="profileProofsCount" class="text-xs font-black text-slate-900 leading-tight">0</p>
+            <p class="text-[9px] font-bold text-slate-400 uppercase mt-0.5">Proofs</p>
+          </div>
+
+          <div class="pro-glass-tile p-2.5 text-center cursor-pointer" onclick="openPointsHistory()">
+            <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-1 text-[11px]"><i class="fa-solid fa-coins"></i></div>
+            <p id="profilePointsDisplay" class="text-xs font-black text-amber-600 leading-tight">300</p>
+            <p class="text-[9px] font-bold text-slate-400 uppercase mt-0.5">PTS</p>
+          </div>
+
+          <div class="pro-glass-tile p-2.5 text-center cursor-pointer" onclick="openModal('upgradeModal')">
+            <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-1 text-[11px]"><i class="fa-solid fa-layer-group"></i></div>
+            <p id="profileLimitsDisplay" class="text-xs font-black text-emerald-600 leading-tight">0 / 5</p>
+            <p class="text-[9px] font-bold text-slate-400 uppercase mt-0.5">Limits</p>
+          </div>
+        </div>
+
+        <div class="app-card divide-y divide-slate-100 text-xs font-bold text-slate-800 overflow-hidden shadow-sm">
+          <div onclick="openWalletCenterV7()" class="px-4 py-3 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs shrink-0">
+                <i class="fa-solid fa-wallet"></i>
+              </div>
+              <span class="text-xs font-bold text-slate-900">Wallet / Deposit / Withdraw</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-black">Instant</span>
+              <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+            </div>
+          </div>
+
+          <div onclick="openKycCenter()" class="px-4 py-3 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs shrink-0">
+                <i class="fa-solid fa-id-card"></i>
+              </div>
+              <span class="text-xs font-bold text-slate-900">KYC Verification</span>
+            </div>
+            <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+          </div>
+
+          <div onclick="openPointsHistory()" class="px-4 py-3 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs shrink-0">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+              </div>
+              <span class="text-xs font-bold text-slate-900">Transactions History</span>
+            </div>
+            <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+          </div>
+
+          <div onclick="handleLogout()" class="px-4 py-3 flex items-center justify-between hover:bg-rose-50 cursor-pointer transition">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs shrink-0">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              </div>
+              <span class="text-xs font-bold text-rose-600">Log Out</span>
+            </div>
+            <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav id="appBottomNav" class="h-16 px-4 bg-white/95 backdrop-blur-md border-t border-slate-100 shrink-0 z-20 flex justify-around items-center">
+      <button onclick="switchTab('home')" id="navBtn-home" class="nav-btn active flex flex-col items-center gap-1 text-indigo-600 transition">
+        <i class="fa-solid fa-house text-base"></i>
+        <span class="text-[9px] font-black">Home</span>
+      </button>
+
+      <button onclick="switchTab('tasks')" id="navBtn-tasks" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
+        <i class="fa-solid fa-layer-group text-base"></i>
+        <span class="text-[9px] font-bold">Tasks</span>
+      </button>
+
+      <button onclick="switchTab('create')" id="navBtn-create" class="w-12 h-12 -mt-6 rounded-full grad-primary text-white flex items-center justify-center text-lg active:scale-95 transition shadow-lg">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+
+      <button onclick="switchTab('chat')" id="navBtn-chat" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition relative">
+        <i class="fa-solid fa-comments text-base"></i>
+        <span class="text-[9px] font-bold">Chat</span>
+      </button>
+
+      <button onclick="switchTab('profile')" id="navBtn-profile" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
+        <i class="fa-solid fa-user text-base"></i>
+        <span class="text-[9px] font-bold">Profile</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- WALLET MODAL -->
+  <div id="walletCenterV7Modal" class="hidden fixed inset-0 z-[84] bg-[#F8FAFC] flex flex-col">
+    <div class="px-5 py-4 bg-gradient-to-r from-indigo-700 via-purple-700 to-indigo-800 text-white flex items-center justify-between shrink-0 shadow-md">
+      <div class="flex items-center gap-3">
+        <button onclick="closeModal('walletCenterV7Modal')" class="w-8 h-8 rounded-xl bg-white/20"><i class="fa-solid fa-arrow-left text-xs"></i></button>
+        <div><h3 class="text-sm font-black">My Wallet</h3><p class="text-[9px] text-indigo-100">Deposit, withdraw & balance</p></div>
+      </div>
+      <i class="fa-solid fa-wallet text-lg"></i>
+    </div>
+    <div class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
+      <div class="vip-hero-banner p-4 text-white shadow-lg">
+        <p class="text-[10px] font-bold text-indigo-100">Available Balance</p>
+        <div class="flex items-end justify-between mt-1">
+          <p id="walletCenterBalanceV7" class="text-3xl font-black">0 PTS</p>
+          <span id="walletCenterBdtV7" class="text-[11px] font-black bg-white/15 px-2 py-1 rounded-lg">৳0.00</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="openDepositModalV7()" class="app-card p-3 text-left border-emerald-200 bg-emerald-50/60">
+          <i class="fa-solid fa-circle-plus text-emerald-600"></i>
+          <p class="text-xs font-black mt-2">Deposit</p>
+          <p class="text-[9px] text-slate-400">bKash / Nagad</p>
+        </button>
+        <button onclick="openWithdrawModal()" class="app-card p-3 text-left border-indigo-200 bg-indigo-50/60">
+          <i class="fa-solid fa-money-bill-transfer text-indigo-600"></i>
+          <p class="text-xs font-black mt-2">Withdraw</p>
+          <p class="text-[9px] text-slate-400">Payout request</p>
+        </button>
+      </div>
+      <div class="app-card p-4">
+        <h4 class="text-xs font-black mb-2">Recent Transactions</h4>
+        <div id="walletRecentTransactionsV7" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEPOSIT MODAL -->
+  <div id="depositModalV7" class="hidden fixed inset-0 z-[92] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="app-card p-5 max-w-sm w-full space-y-3.5 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <div><h4 class="text-sm font-black">Deposit Request</h4><p class="text-[9px] text-slate-400">Send money to admin number</p></div>
+        <button onclick="closeModal('depositModalV7')" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-3 rounded-2xl bg-indigo-50 border border-indigo-100 text-[10px] text-indigo-800">
+        <b>Admin bKash / Nagad:</b> 01700000000 (Send Money)
+      </div>
+      <form onsubmit="handleDepositSubmit(event)" class="space-y-3">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-700 mb-1">Gateway</label>
+          <select id="depositGateway" class="w-full app-input px-3 py-2 text-xs font-bold">
+            <option value="bkash">bKash</option>
+            <option value="nagad">Nagad</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-700 mb-1">Amount (BDT)</label>
+          <input id="depositAmount" type="number" min="10" required class="w-full app-input px-3 py-2 text-xs font-black" placeholder="100">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-700 mb-1">TrxID</label>
+          <input id="depositTrxId" required class="w-full app-input px-3 py-2 text-xs" placeholder="e.g. 9J283KD9">
+        </div>
+        <button type="submit" class="w-full py-3 bg-emerald-600 text-white rounded-xl text-xs font-black shadow-md">Submit Deposit</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- WITHDRAW MODAL -->
+  <div id="withdrawModal" class="hidden fixed inset-0 z-[90] bg-[#F8FAFC] flex flex-col">
+    <div class="px-5 py-4 bg-gradient-to-r from-indigo-700 via-purple-700 to-indigo-800 text-white flex items-center justify-between shrink-0 shadow-md">
+      <button onclick="closeModal('withdrawModal')" class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center"><i class="fa-solid fa-arrow-left text-xs"></i></button>
+      <h3 class="text-sm font-extrabold">Withdraw Points</h3>
+      <div></div>
+    </div>
+    <div class="p-5 space-y-4">
+      <div class="app-card p-4 bg-indigo-50 border-indigo-100">
+        <p class="text-[10px] font-bold text-indigo-900">Current Balance</p>
+        <p class="text-2xl font-black text-indigo-600 mt-1" id="withdrawModalPts">0 PTS</p>
+      </div>
+      <form onsubmit="handleWithdrawSubmit(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Gateway</label>
+          <select id="withdrawGateway" class="w-full app-input px-3.5 py-2.5 text-xs font-bold text-slate-800">
+            <option value="bkash">bKash</option>
+            <option value="nagad">Nagad</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Account Number</label>
+          <input type="tel" id="withdrawAccount" required placeholder="017XXXXXXXX" class="w-full app-input px-3.5 py-2.5 text-xs font-semibold" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Points to Withdraw (Min 500 PTS)</label>
+          <input type="number" id="withdrawPtsInput" min="500" required placeholder="500" class="w-full app-input px-3.5 py-2.5 text-xs font-black" />
+        </div>
+        <button type="submit" class="w-full py-3.5 grad-primary text-white rounded-xl text-xs font-black shadow-md">Request Payout</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- TASK EXECUTE / PROOF SUBMIT MODAL -->
+  <div id="taskExecuteModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="app-card p-5 max-w-xs w-full space-y-3.5 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div id="modalTaskBadgeContent" class="flex items-center gap-3 pb-2 border-b border-slate-100"></div>
+
+      <a id="modalExternalLink" href="#" target="_blank" class="w-full py-2.5 app-btn text-indigo-600 font-black rounded-xl text-xs flex items-center justify-center gap-2 active:scale-95 transition">
+        Go to Platform Link <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+      </a>
+
+      <form onsubmit="handleProofSubmit(event)" class="space-y-2.5 pt-1 border-t border-slate-100">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-700 mb-1">Select Proof Screenshot</label>
+          <input type="file" id="proofFileInput" accept="image/*" required class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 cursor-pointer" />
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-700 mb-1">Your Account Handle / Username</label>
+          <input type="text" id="proofUserNote" required placeholder="e.g. @worker_user" class="w-full app-input px-3 py-2 text-xs font-semibold" />
+        </div>
+
+        <div class="space-y-1.5 pt-1">
+          <button type="submit" id="btnSubmitProof" class="w-full py-2.5 grad-primary text-white rounded-xl text-xs font-black shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Submit Proof
+          </button>
+          <button type="button" onclick="closeModal('taskExecuteModal')" class="w-full py-1 text-center text-xs font-bold text-slate-400">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- KYC MODAL -->
+  <div id="kycModal" class="hidden fixed inset-0 z-[65] bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="app-card p-5 max-w-sm w-full space-y-3 shadow-2xl">
+      <div class="flex justify-between items-center">
+        <h4 class="text-sm font-black">Identity Verification</h4>
+        <button onclick="closeModal('kycModal')" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleKycSubmit(event)" class="space-y-2.5">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-600 mb-0.5">ID Type</label>
+          <select id="kycIdType" class="w-full app-input px-3 py-2 text-xs font-bold">
+            <option value="nid">National ID</option>
+            <option value="passport">Passport</option>
+            <option value="driving_license">Driving License</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-600 mb-0.5">ID Number</label>
+          <input id="kycIdNumber" required class="w-full app-input px-3 py-2 text-xs font-semibold" placeholder="e.g. 1928392819">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Front Image</label>
+          <input type="file" id="kycFrontImg" accept="image/*" required class="w-full text-xs">
+        </div>
+        <button type="submit" id="btnSubmitKyc" class="w-full py-2.5 grad-primary text-white rounded-xl text-xs font-black shadow-md mt-2">
+          Submit for Review
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- TRANSACTIONS HISTORY MODAL -->
+  <div id="pointsHistoryModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="app-card p-5 max-w-sm w-full space-y-4 shadow-2xl max-h-[80vh] overflow-hidden">
+      <div class="flex justify-between items-center">
+        <div>
+          <h4 class="text-sm font-extrabold text-slate-900">Transaction History</h4>
+          <p class="text-[10px] font-semibold text-slate-400">Ledger balance records</p>
+        </div>
+        <button onclick="closeModal('pointsHistoryModal')" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="pointsHistoryList" class="space-y-2 overflow-y-auto max-h-[55vh] no-scrollbar"></div>
+    </div>
+  </div>
+
+  <!-- ================= SUPABASE CLIENT SCRIPT ================= -->
+  <script>
+    // Supabase Credentials
+    const SUPABASE_URL = 'https://yijfsuiuhtfhzqasfjp.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlpampmc3VpdWh0Zmh6cWFzZmpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MzYzODUsImV4cCI6MjEwNDIxMjM4NX0.ksHTXtTABkjKyaTQcjyrsHafxDYbQLk55IzyW2IZhtw';
+    
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+    let userProfile = null;
+    let databaseTasks = [];
+    let submittedProofs = [];
+    let selectedPlatform = 'youtube';
+    let currentActiveTaskId = null;
+    let currentFilterTab = 'all';
+
+    const globalCountries = ["Bangladesh", "India", "Pakistan", "United States", "United Kingdom", "Canada", "Saudi Arabia", "UAE"];
+
+    const allPlatformsConfig = [
+      { id: 'youtube', name: 'YouTube', iconClass: 'brand-yt', icon: 'fa-brands fa-youtube', categories: ['YouTube Channel Subscribe', 'Watch Full Video', 'Like & Positive Comment'] },
+      { id: 'facebook', name: 'Facebook', iconClass: 'brand-fb', icon: 'fa-brands fa-facebook-f', categories: ['Like & Follow Facebook Page', 'Join Facebook Public Group', 'Share Post'] },
+      { id: 'instagram', name: 'Instagram', iconClass: 'brand-ig', icon: 'fa-brands fa-instagram', categories: ['Follow Instagram Account', 'Like & Save Post'] },
+      { id: 'telegram', name: 'Telegram', iconClass: 'brand-tg', icon: 'fa-brands fa-telegram', categories: ['Join Telegram Channel', 'Join Telegram Group'] },
+      { id: 'tiktok', name: 'TikTok', iconClass: 'brand-tt', icon: 'fa-brands fa-tiktok', categories: ['Follow TikTok Creator', 'Like & Repost Video'] }
+    ];
+
+    function escapeHTML(str) {
+      return String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+
+    function renderIconInner(meta) {
+      return `<i class="${meta.icon} text-lg"></i>`;
+    }
+
+    function getPlatformMeta(platId) {
+      return allPlatformsConfig.find(p => p.id === platId) || allPlatformsConfig[0];
+    }
+
+    // ================= AUTHENTICATION =================
+    async function initApp() {
+      populateCountryDropdown();
+      build4ColumnHomePlatformGrid();
+      buildDynamicFilterPills();
+      build4ColumnPlatformSelectors();
+      updateCategoryDropdown('youtube');
+
+      const { data: { session } } = await sb.auth.getSession();
+      handleAuthState(session?.user || null);
+
+      sb.auth.onAuthStateChange((event, session) => {
+        handleAuthState(session?.user || null);
+      });
+    }
+
+    async function handleAuthState(user) {
+      currentUser = user;
+      const authView = document.getElementById('view-auth');
+      const bottomNav = document.getElementById('appBottomNav');
+      const homeHeader = document.getElementById('homeFixedHeader');
+
+      if (!user) {
+        authView.classList.remove('hidden');
+        bottomNav.classList.add('hidden');
+        homeHeader.classList.add('hidden');
+      } else {
+        authView.classList.add('hidden');
+        bottomNav.classList.remove('hidden');
+        homeHeader.classList.remove('hidden');
+        await fetchUserProfile();
+        await fetchTasks();
+        await fetchProofs();
+      }
+    }
+
+    function switchAuthTab(tab) {
+      const btnLogin = document.getElementById('tabBtnLogin');
+      const btnSignup = document.getElementById('tabBtnSignup');
+      const fLogin = document.getElementById('formLogin');
+      const fSignup = document.getElementById('formSignup');
+
+      if (tab === 'login') {
+        btnLogin.className = "flex-1 py-2.5 rounded-2xl text-xs font-extrabold grad-primary text-white shadow transition";
+        btnSignup.className = "flex-1 py-2.5 rounded-2xl text-xs font-bold text-slate-500 hover:text-slate-800 transition";
+        fLogin.classList.remove('hidden');
+        fSignup.classList.add('hidden');
+      } else {
+        btnSignup.className = "flex-1 py-2.5 rounded-2xl text-xs font-extrabold grad-primary text-white shadow transition";
+        btnLogin.className = "flex-1 py-2.5 rounded-2xl text-xs font-bold text-slate-500 hover:text-slate-800 transition";
+        fSignup.classList.remove('hidden');
+        fLogin.classList.add('hidden');
+      }
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) alert('Login Error: ' + error.message);
+    }
+
+    async function handleSignupSubmit(e) {
+      e.preventDefault();
+      const full_name = document.getElementById('signupFullName').value.trim();
+      const email = document.getElementById('signupEmail').value.trim();
+      const username = document.getElementById('signupUsername').value.trim().toLowerCase();
+      const country = document.getElementById('signupCountry').value;
+      const password = document.getElementById('signupPassword').value;
+
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name, username, country }
+        }
+      });
+
+      if (error) {
+        alert('Signup Error: ' + error.message);
+        return;
+      }
+
+      if (data?.user) {
+        // Create initial profile in public.profiles table
+        const { error: profError } = await sb.from('profiles').insert([{
+          id: data.user.id,
+          full_name,
+          username,
+          country,
+          points: 300,
+          task_limit: 5,
+          role: 'user'
+        }]);
+
+        if (profError) {
+          console.error(profError);
+        } else {
+          alert('Account created! 300 Bonus points have been added.');
+        }
+      }
+    }
+
+    async function handleLogout() {
+      if (!confirm('Are you sure you want to log out?')) return;
+      await sb.auth.signOut();
+    }
+
+    // ================= PROFILE & DATA =================
+    async function fetchUserProfile() {
+      if (!currentUser) return;
+      const { data, error } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+      if (error) {
+        console.error('Fetch profile error:', error);
+        return;
+      }
+      userProfile = data;
+      syncProfileUI();
+    }
+
+    function syncProfileUI() {
+      if (!userProfile) return;
+      document.getElementById('profileNameDisplay').innerText = userProfile.full_name || 'User';
+      document.getElementById('profileHandleDisplay').innerText = '@' + userProfile.username;
+      document.getElementById('profilePointsDisplay').innerText = userProfile.points || 0;
+      document.getElementById('statTaskLimit').innerText = `0 / ${userProfile.task_limit || 5}`;
+      document.getElementById('profileLimitsDisplay').innerText = `0 / ${userProfile.task_limit || 5}`;
+      document.getElementById('walletCenterBalanceV7').innerText = `${userProfile.points || 0} PTS`;
+      document.getElementById('walletCenterBdtV7').innerText = `৳${((userProfile.points || 0) / 10).toFixed(2)}`;
+      document.getElementById('withdrawModalPts').innerText = `${userProfile.points || 0} PTS`;
+      document.getElementById('userLocationText').innerText = `${userProfile.city || 'Dhaka'}, ${userProfile.country || 'Bangladesh'}`;
+      
+      const verBadge = document.getElementById('profileBadgeTag');
+      verBadge.innerHTML = userProfile.is_verified 
+        ? `<span class="text-[9px] font-black uppercase bg-blue-500/25 text-cyan-300 px-2.5 py-0.5 rounded-full">Verified</span>`
+        : `<span class="text-[9px] font-black uppercase bg-red-500/25 text-red-300 px-2.5 py-0.5 rounded-full">Unverified</span>`;
+    }
+
+    // ================= TASKS & PROOFS =================
+    async function fetchTasks() {
+      const { data, error } = await sb.from('tasks').select('*').eq('status', 'active');
+      if (error) {
+        console.error(error);
+        return;
+      }
+      databaseTasks = data || [];
+      refreshAllCountersAndViews();
+    }
+
+    async function fetchProofs() {
+      if (!currentUser) return;
+      const { data, error } = await sb.from('proofs').select('*').eq('status', 'pending');
+      if (error) {
+        console.error(error);
+        return;
+      }
+      submittedProofs = data || [];
+      document.getElementById('reviewCountBadge').innerText = `${submittedProofs.length} Pending`;
+      document.getElementById('profileProofsCount').innerText = submittedProofs.length;
+      renderProofReviewFeed();
+    }
+
+    function refreshAllCountersAndViews() {
+      document.getElementById('statTotalActiveTasks').innerText = databaseTasks.length;
+      document.getElementById('taskCountBadge').innerText = databaseTasks.length;
+      renderTasks(currentFilterTab);
+      renderHomeTasks();
+    }
+
+    function renderTasks(platform = 'all') {
+      currentFilterTab = platform;
+      const container = document.getElementById('fullTasksHubList');
+      container.innerHTML = '';
+      const list = platform === 'all' ? databaseTasks : databaseTasks.filter(t => t.platform === platform);
+
+      if (!list.length) {
+        container.innerHTML = `<div class="app-card p-8 text-center text-slate-400 space-y-2"><p class="text-xs font-bold text-slate-500">No active tasks found</p></div>`;
+        return;
+      }
+
+      list.forEach(task => {
+        const meta = getPlatformMeta(task.platform);
+        const item = document.createElement('div');
+        item.className = 'app-card p-3.5 flex items-center justify-between gap-3 hover:border-indigo-200 transition';
+        item.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-11 h-11 ${meta.iconClass} rounded-2xl flex items-center justify-center text-lg shrink-0 shadow-md">
+              ${renderIconInner(meta)}
+            </div>
+            <div class="min-w-0">
+              <h5 class="text-xs font-extrabold text-slate-900 truncate leading-tight">${escapeHTML(task.title)}</h5>
+              <span class="inline-flex mt-1 text-[9px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">+${task.reward_points} PTS</span>
+            </div>
+          </div>
+          <button onclick="openTaskExecuteModal('${task.id}')" class="px-3.5 py-1.5 grad-primary text-white text-[11px] font-bold rounded-xl shrink-0">
+            Do Task
+          </button>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderHomeTasks() {
+      const container = document.getElementById('homeTaskListContainer');
+      container.innerHTML = '';
+      const preview = databaseTasks.slice(0, 4);
+
+      if (!preview.length) {
+        container.innerHTML = `<div class="app-card p-4 text-center text-xs font-bold text-slate-400">No active tasks right now</div>`;
+        return;
+      }
+
+      preview.forEach(task => {
+        const meta = getPlatformMeta(task.platform);
+        const card = document.createElement('div');
+        card.className = 'app-card p-3 flex items-center justify-between gap-2';
+        card.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 ${meta.iconClass} rounded-xl flex items-center justify-center text-base shadow-sm shrink-0">
+              ${renderIconInner(meta)}
+            </div>
+            <div class="min-w-0">
+              <h5 class="text-xs font-extrabold text-slate-900 truncate">${escapeHTML(task.title)}</h5>
+              <p class="text-[10px] font-semibold text-slate-400 truncate">${escapeHTML(task.platform)}</p>
+            </div>
+          </div>
+          <button onclick="openTaskExecuteModal('${task.id}')" class="px-3.5 py-1.5 grad-primary text-white text-[11px] font-bold rounded-xl shrink-0">
+            Do Task
+          </button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function handleTaskSubmit(e) {
+      e.preventDefault();
+      if (!currentUser) return alert('Please login first');
+
+      const title = document.getElementById('inputTaskAction').value;
+      const target_url = document.getElementById('inputTargetUrl').value.trim();
+      const quantity = parseInt(document.getElementById('inputQuantity').value, 10);
+
+      if (userProfile.points < quantity) {
+        return alert('Insufficient points to create this task campaign!');
+      }
+
+      const { data, error } = await sb.from('tasks').insert([{
+        creator_id: currentUser.id,
+        platform: selectedPlatform,
+        category: title,
+        title: title,
+        target_url: target_url,
+        reward_points: 15,
+        total_quantity: quantity,
+        status: 'active'
+      }]).select();
+
+      if (error) {
+        alert('Error creating task: ' + error.message);
+      } else {
+        await sb.from('profiles').update({ points: userProfile.points - quantity }).eq('id', currentUser.id);
+        alert('Campaign published successfully!');
+        e.target.reset();
+        await fetchUserProfile();
+        await fetchTasks();
+        switchTab('tasks');
+      }
+    }
+
+    function openTaskExecuteModal(id) {
+      const task = databaseTasks.find(t => String(t.id) === String(id));
+      if (!task) return;
+      currentActiveTaskId = id;
+      const meta = getPlatformMeta(task.platform);
+
+      document.getElementById('modalTaskBadgeContent').innerHTML = `
+        <div class="w-11 h-11 ${meta.iconClass} rounded-xl flex items-center justify-center text-lg shadow-sm shrink-0">
+          ${renderIconInner(meta)}
+        </div>
+        <div class="min-w-0">
+          <h4 class="text-xs font-extrabold text-slate-900 truncate">${escapeHTML(task.title)}</h4>
+          <p class="text-[11px] font-semibold text-slate-400 truncate">${escapeHTML(task.platform)}</p>
+        </div>
+      `;
+      document.getElementById('modalExternalLink').href = task.target_url;
+      openModal('taskExecuteModal');
+    }
+
+    async function handleProofSubmit(e) {
+      e.preventDefault();
+      if (!currentUser) return alert('Please login first');
+
+      const file = document.getElementById('proofFileInput').files[0];
+      const handle = document.getElementById('proofUserNote').value.trim();
+      if (!file) return alert('Please select a screenshot proof');
+
+      const btn = document.getElementById('btnSubmitProof');
+      btn.disabled = true;
+      btn.innerText = 'Uploading to Storage...';
+
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await sb.storage.from('proofs').upload(filePath, file);
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = sb.storage.from('proofs').getPublicUrl(filePath);
+
+        const { error: proofError } = await sb.from('proofs').insert([{
+          task_id: currentActiveTaskId,
+          worker_id: currentUser.id,
+          worker_handle: handle,
+          screenshot_url: publicUrl,
+          image_hash: fileName,
+          status: 'pending'
+        }]);
+
+        if (proofError) throw proofError;
+
+        alert('Proof submitted successfully! Awaiting verification.');
+        closeModal('taskExecuteModal');
+        e.target.reset();
+        await fetchProofs();
+      } catch (err) {
+        alert('Submission error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Submit Proof';
+      }
+    }
+
+    function renderProofReviewFeed() {
+      const container = document.getElementById('proofSubmissionsContainer');
+      container.innerHTML = '';
+      if (!submittedProofs.length) {
+        container.innerHTML = '<div class="p-6 text-center text-xs text-slate-400">No pending submissions</div>';
+        return;
+      }
+      submittedProofs.forEach(p => {
+        const d = document.createElement('div');
+        d.className = 'p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-2';
+        d.innerHTML = `
+          <div class="flex justify-between items-center text-xs font-bold">
+            <span>Worker: ${escapeHTML(p.worker_handle)}</span>
+            <span class="text-amber-600 font-black">Pending</span>
+          </div>
+          <a href="${p.screenshot_url}" target="_blank" class="text-indigo-600 text-xs font-bold underline block">View Screenshot</a>
+        `;
+        container.appendChild(d);
+      });
+    }
+
+    // ================= WALLET & KYC =================
+    function openWalletCenterV7() {
+      openModal('walletCenterV7Modal');
+    }
+
+    function openDepositModalV7() {
+      closeModal('walletCenterV7Modal');
+      openModal('depositModalV7');
+    }
+
+    function openWithdrawModal() {
+      closeModal('walletCenterV7Modal');
+      openModal('withdrawModal');
+    }
+
+    async function handleDepositSubmit(e) {
+      e.preventDefault();
+      const amount = parseFloat(document.getElementById('depositAmount').value);
+      const gateway = document.getElementById('depositGateway').value;
+      const trx_id = document.getElementById('depositTrxId').value.trim();
+
+      const { error } = await sb.from('transactions').insert([{
+        user_id: currentUser.id,
+        type: 'deposit',
+        points: Math.round(amount * 10),
+        amount_bdt: amount,
+        gateway: gateway,
+        trx_id: trx_id,
+        status: 'pending'
+      }]);
+
+      if (error) {
+        alert('Deposit failed: ' + error.message);
+      } else {
+        alert('Deposit request submitted! Admin will verify and credit your wallet.');
+        closeModal('depositModalV7');
+        e.target.reset();
+      }
+    }
+
+    async function handleWithdrawSubmit(e) {
+      e.preventDefault();
+      const pts = parseInt(document.getElementById('withdrawPtsInput').value, 10);
+      const gateway = document.getElementById('withdrawGateway').value;
+
+      if (userProfile.points < pts) {
+        return alert('Insufficient points balance!');
+      }
+
+      const { error } = await sb.from('transactions').insert([{
+        user_id: currentUser.id,
+        type: 'withdrawal',
+        points: pts,
+        amount_bdt: pts / 10,
+        gateway: gateway,
+        status: 'pending'
+      }]);
+
+      if (error) {
+        alert('Withdrawal request failed: ' + error.message);
+      } else {
+        alert('Withdrawal request placed successfully.');
+        closeModal('withdrawModal');
+        e.target.reset();
+      }
+    }
+
+    function openKycCenter() {
+      openModal('kycModal');
+    }
+
+    async function handleKycSubmit(e) {
+      e.preventDefault();
+      const id_type = document.getElementById('kycIdType').value;
+      const id_number = document.getElementById('kycIdNumber').value.trim();
+      const file = document.getElementById('kycFrontImg').files[0];
+
+      if (!file) return alert('Select ID card image');
+
+      const btn = document.getElementById('btnSubmitKyc');
+      btn.disabled = true;
+      btn.innerText = 'Submitting...';
+
+      try {
+        const filePath = `kyc_${currentUser.id}_${Date.now()}`;
+        const { error: uploadError } = await sb.storage.from('avatars').upload(filePath, file);
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = sb.storage.from('avatars').getPublicUrl(filePath);
+
+        const { error } = await sb.from('kyc_records').insert([{
+          user_id: currentUser.id,
+          id_type,
+          id_number,
+          front_image: publicUrl,
+          status: 'pending'
+        }]);
+
+        if (error) throw error;
+
+        alert('KYC details uploaded for verification.');
+        closeModal('kycModal');
+        e.target.reset();
+      } catch (err) {
+        alert('KYC submission error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Submit for Review';
+      }
+    }
+
+    async function openPointsHistory() {
+      if (!currentUser) return;
+      const { data } = await sb.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+      const list = document.getElementById('pointsHistoryList');
+      list.innerHTML = '';
+      if (!data || !data.length) {
+        list.innerHTML = '<div class="p-6 text-center text-slate-400 text-xs font-bold">No transactions found</div>';
+      } else {
+        data.forEach(t => {
+          const row = document.createElement('div');
+          row.className = 'p-3 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between text-xs font-bold';
+          row.innerHTML = `
+            <div>
+              <p class="text-slate-800">${escapeHTML(t.type.toUpperCase())} (${t.status})</p>
+              <p class="text-[9px] text-slate-400">${new Date(t.created_at).toLocaleString()}</p>
+            </div>
+            <span class="${t.type === 'deposit' || t.type === 'reward' ? 'text-emerald-600' : 'text-rose-600'}">
+              ${t.points} PTS
+            </span>
+          `;
+          list.appendChild(row);
+        });
+      }
+      openModal('pointsHistoryModal');
+    }
+
+    // ================= PLATFORMS & UI HELPERS =================
+    function build4ColumnHomePlatformGrid() {
+      const container = document.getElementById('home4ColumnPlatformGrid');
+      container.innerHTML = '';
+      allPlatformsConfig.forEach(p => {
+        const btn = document.createElement('button');
+        btn.onclick = () => filterTasks(p.id);
+        btn.className = 'flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-100 active:scale-95 transition';
+        btn.innerHTML = `
+          <div class="w-12 h-12 ${p.iconClass} rounded-2xl flex items-center justify-center text-lg shrink-0 shadow-md">
+            ${renderIconInner(p)}
+          </div>
+          <span class="text-[11px] font-extrabold text-slate-800 truncate w-full">${p.name}</span>
+        `;
+        container.appendChild(btn);
+      });
+    }
+
+    function buildDynamicFilterPills() {
+      const row = document.getElementById('filterPillsRow');
+      row.innerHTML = `
+        <button onclick="filterTasks('all', this)" class="task-pill active px-4 py-2 grad-primary text-white text-xs font-extrabold rounded-xl whitespace-nowrap">
+          All Tasks
+        </button>
+      `;
+      allPlatformsConfig.forEach(p => {
+        const btn = document.createElement('button');
+        btn.onclick = () => filterTasks(p.id, btn);
+        btn.className = 'task-pill px-3.5 py-2 app-card-sm text-slate-700 text-xs font-bold whitespace-nowrap';
+        btn.innerText = p.name;
+        row.appendChild(btn);
+      });
+    }
+
+    function filterTasks(platform, btn) {
+      if (btn) {
+        document.querySelectorAll('#filterPillsRow .task-pill').forEach(b => {
+          b.className = 'task-pill px-3.5 py-2 app-card-sm text-slate-700 text-xs font-bold whitespace-nowrap';
+        });
+        btn.className = 'task-pill active px-4 py-2 grad-primary text-white text-xs font-extrabold rounded-xl whitespace-nowrap';
+      }
+      renderTasks(platform);
+    }
+
+    function build4ColumnPlatformSelectors() {
+      const group = document.getElementById('createPlatGroup');
+      group.innerHTML = '';
+      allPlatformsConfig.forEach((p, idx) => {
+        const isSelected = idx === 0;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => setCreatePlatform(p.id, btn);
+        btn.className = `plat-sel-btn p-2 rounded-2xl flex flex-col items-center gap-1.5 transition ${isSelected ? 'border-2 border-indigo-600 bg-indigo-50/60 shadow-sm' : 'border border-slate-200 bg-white'}`;
+        btn.innerHTML = `
+          <div class="w-11 h-11 ${p.iconClass} rounded-2xl flex items-center justify-center text-base shadow-md">
+            ${renderIconInner(p)}
+          </div>
+          <span class="text-[10px] font-extrabold ${isSelected ? 'text-indigo-600' : 'text-slate-700'} truncate w-full text-center">${p.name}</span>
+        `;
+        group.appendChild(btn);
+      });
+    }
+
+    function setCreatePlatform(plat, btn) {
+      selectedPlatform = plat;
+      document.querySelectorAll('#createPlatGroup .plat-sel-btn').forEach(b => {
+        b.className = 'plat-sel-btn p-2 rounded-2xl flex flex-col items-center gap-1.5 transition border border-slate-200 bg-white';
+        b.querySelector('span').className = 'text-[10px] font-extrabold text-slate-700 truncate w-full text-center';
+      });
+      btn.className = 'plat-sel-btn p-2 rounded-2xl flex flex-col items-center gap-1.5 transition border-2 border-indigo-600 bg-indigo-50/60 shadow-sm';
+      btn.querySelector('span').className = 'text-[10px] font-extrabold text-indigo-600 truncate w-full text-center';
+      updateCategoryDropdown(plat);
+    }
+
+    function updateCategoryDropdown(platId) {
+      const meta = getPlatformMeta(platId);
+      const select = document.getElementById('inputTaskAction');
+      document.getElementById('currentPlatNameBadge').innerText = meta.name;
+      select.innerHTML = '';
+      meta.categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.innerText = cat;
+        select.appendChild(opt);
+      });
+    }
+
+    function calcCost() {
+      const val = document.getElementById('inputQuantity').value || 0;
+      document.getElementById('costNumber').innerText = val;
+    }
+
+    function populateCountryDropdown() {
+      const selects = [document.getElementById('signupCountry')];
+      selects.forEach(select => {
+        if (!select) return;
+        select.innerHTML = '<option value="">Select Country</option>';
+        globalCountries.forEach(country => {
+          const opt = document.createElement('option');
+          opt.value = country;
+          opt.innerText = country;
+          select.appendChild(opt);
+        });
+      });
+    }
+
+    function switchTab(viewName) {
+      document.querySelectorAll('.screen-view').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById(`view-${viewName}`);
+      if (target) target.classList.remove('hidden');
+
+      const homeFixedHeader = document.getElementById('homeFixedHeader');
+      if (viewName === 'home' && currentUser) homeFixedHeader.classList.remove('hidden');
+      else homeFixedHeader.classList.add('hidden');
+
+      document.querySelectorAll('nav .nav-btn').forEach(btn => {
+        btn.classList.remove('text-indigo-600', 'active');
+        btn.classList.add('text-slate-400');
+      });
+      const activeNavBtn = document.getElementById(`navBtn-${viewName}`);
+      if (activeNavBtn) {
+        activeNavBtn.classList.remove('text-slate-400');
+        activeNavBtn.classList.add('text-indigo-600', 'active');
+      }
+      document.getElementById('mainContainer').scrollTop = 0;
+    }
+
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) { el.classList.add('flex'); el.classList.remove('hidden'); }
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) { el.classList.remove('flex'); el.classList.add('hidden'); }
+    }
+
+    function toggleChatMode(mode, btn) {
+      if (mode === 'direct') {
+        document.getElementById('subViewDirectMessages').classList.remove('hidden');
+        document.getElementById('subViewGlobalLiveChat').classList.add('hidden');
+      } else {
+        document.getElementById('subViewDirectMessages').classList.add('hidden');
+        document.getElementById('subViewGlobalLiveChat').classList.remove('hidden');
+      }
+    }
+
+    function handleSendGlobalMsg(e) {
+      e.preventDefault();
+      const input = document.getElementById('inputGlobalMsg');
+      if (!input.value.trim()) return;
+      const feed = document.getElementById('liveMessageFeed');
+      const msg = document.createElement('div');
+      msg.className = 'p-2.5 bg-indigo-50 text-indigo-900 rounded-xl max-w-[80%] ml-auto text-right font-semibold';
+      msg.innerText = input.value.trim();
+      feed.appendChild(msg);
+      input.value = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
