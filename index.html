@@ -782,7 +782,26 @@
       { id: 'facebook', name: 'Facebook', iconClass: 'brand-fb', icon: 'fa-brands fa-facebook-f', categories: ['Like & Follow Facebook Page', 'Join Facebook Public Group', 'Share Post'] },
       { id: 'instagram', name: 'Instagram', iconClass: 'brand-ig', icon: 'fa-brands fa-instagram', categories: ['Follow Instagram Account', 'Like & Save Post'] },
       { id: 'telegram', name: 'Telegram', iconClass: 'brand-tg', icon: 'fa-brands fa-telegram', categories: ['Join Telegram Channel', 'Join Telegram Group'] },
-      { id: 'tiktok', name: 'TikTok', iconClass: 'brand-tt', icon: 'fa-brands fa-tiktok', categories: ['Follow TikTok Creator', 'Like & Repost Video'] }
+      { id: 'tiktok', name: 'TikTok', iconClass: 'brand-tt', icon: 'fa-brands fa-tiktok', categories: ['Follow TikTok Creator', 'Like & Repost Video'] },
+      { id: 'twitter', name: 'X (Twitter)', iconClass: 'brand-x', icon: 'fa-brands fa-x-twitter', categories: ['Follow X Profile', 'Retweet & Like Post'] },
+      { id: 'reddit', name: 'Reddit', iconClass: 'brand-reddit', icon: 'fa-brands fa-reddit-alien', categories: ['Join Subreddit', 'Upvote Post'] },
+      { id: 'discord', name: 'Discord', iconClass: 'brand-discord', icon: 'fa-brands fa-discord', categories: ['Join Discord Server'] },
+      { id: 'whatsapp', name: 'WhatsApp', iconClass: 'brand-whatsapp', icon: 'fa-brands fa-whatsapp', categories: ['Join WhatsApp Channel', 'Join WhatsApp Group'] },
+      { id: 'linkedin', name: 'LinkedIn', iconClass: 'brand-linkedin', icon: 'fa-brands fa-linkedin-in', categories: ['Follow LinkedIn Company', 'Like & Share Post'] },
+      { id: 'snapchat', name: 'Snapchat', iconClass: 'brand-snap', icon: 'fa-brands fa-snapchat', categories: ['Add Snapchat Profile', 'View Spotlight Video'] },
+      { id: 'pinterest', name: 'Pinterest', iconClass: 'brand-pinterest', icon: 'fa-brands fa-pinterest-p', categories: ['Follow Pinterest Profile', 'Save Pin'] },
+      { id: 'twitch', name: 'Twitch', iconClass: 'brand-twitch', icon: 'fa-brands fa-twitch', categories: ['Follow Twitch Channel'] },
+      { id: 'kick', name: 'Kick', iconClass: 'brand-kick', icon: 'fa-solid fa-k', categories: ['Follow Kick Channel'] },
+      { id: 'threads', name: 'Threads', iconClass: 'brand-threads', icon: 'fa-brands fa-threads', categories: ['Follow Threads Profile', 'Like & Reply'] },
+      { id: 'bilibili', name: 'Bilibili', iconClass: 'brand-bili', icon: 'fa-solid fa-tv', categories: ['Subscribe Bilibili Channel'] },
+      { id: 'imo', name: 'Imo', iconClass: 'brand-imo', icon: 'fa-solid fa-video', categories: ['Join Imo Channel'] },
+      { id: 'bigo', name: 'Bigo Live', iconClass: 'brand-bigo', icon: 'fa-solid fa-broadcast-tower', categories: ['Follow Bigo Host'] },
+      { id: 'likee', name: 'Likee', iconClass: 'brand-likee', icon: 'fa-solid fa-fire', categories: ['Follow Likee Creator'] },
+      { id: 'sharechat', name: 'ShareChat', iconClass: 'brand-sharechat', icon: 'fa-solid fa-share-nodes', categories: ['Follow ShareChat Profile'] },
+      { id: 'moj', name: 'Moj', iconClass: 'brand-moj', icon: 'fa-solid fa-masks-theater', categories: ['Follow Moj Creator'] },
+      { id: 'kwai', name: 'Kwai', iconClass: 'brand-kwai', icon: 'fa-solid fa-video', categories: ['Follow Kwai Creator'] },
+      { id: 'vk', name: 'VKontakte', iconClass: 'brand-vk', icon: 'fa-brands fa-vk', categories: ['Join VK Group', 'Follow VK Page'] },
+      { id: 'bereal', name: 'BeReal', iconClass: 'brand-bereal', icon: 'fa-solid fa-camera', categories: ['Add BeReal Friend'] }
     ];
 
     function escapeHTML(str) {
@@ -830,7 +849,26 @@
         await fetchUserProfile();
         await fetchTasks();
         await fetchProofs();
+        setupRealtimeBalanceListener();
       }
+    }
+
+    // Instant Realtime Balance Sync without Refresh
+    function setupRealtimeBalanceListener() {
+      if (!currentUser) return;
+      sb.channel('public:profiles:id=eq.' + currentUser.id)
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${currentUser.id}`
+        }, payload => {
+          if (payload.new) {
+            userProfile = payload.new;
+            syncProfileUI();
+          }
+        })
+        .subscribe();
     }
 
     function switchAuthTab(tab) {
@@ -1206,7 +1244,7 @@
         return alert('Insufficient points balance!');
       }
 
-      // Supabase RPC দিয়ে অ্যাটমিক ব্যালেন্স ডিডাকশন ও ট্রানজ্যাকশন ইনসার্ট
+      // Supabase RPC দিয়ে অ্যাটমিক ব্যালেন্স ডিডাকশন ও ট্রানজ্যাকশন ইনসার্ট
       const { data, error } = await sb.rpc('process_withdrawal', {
         p_user_id: currentUser.id,
         p_points: Number(pts),
