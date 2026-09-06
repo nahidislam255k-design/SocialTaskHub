@@ -273,35 +273,39 @@
     }
 
     async function loadAll() {
-      const [uCount, tCount, proofs, deposits, withdrawals, kyc] = await Promise.all([
-        sb.from('profiles').select('id', { count: 'exact', head: true }),
-        sb.from('tasks').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-        sb.from('proofs').select('*, tasks(title, reward_points)').eq('status', 'pending'),
-        sb.from('transactions').select('*, profiles(username)').eq('type', 'deposit').eq('status', 'pending'),
-        sb.from('transactions').select('*, profiles(username)').eq('type', 'withdrawal').eq('status', 'pending'),
-        sb.from('kyc_records').select('*, profiles(username, full_name)').eq('status', 'pending')
-      ]);
+      try {
+        const [uCount, tCount, proofs, deposits, withdrawals, kyc] = await Promise.all([
+          sb.from('profiles').select('id', { count: 'exact', head: true }),
+          sb.from('tasks').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+          sb.from('proofs').select('*').eq('status', 'pending'),
+          sb.from('transactions').select('*').eq('type', 'deposit').eq('status', 'pending'),
+          sb.from('transactions').select('*').eq('type', 'withdrawal').eq('status', 'pending'),
+          sb.from('kyc_records').select('*').eq('status', 'pending')
+        ]);
 
-      document.getElementById('cUsers').innerText = uCount.count || 0;
-      document.getElementById('cTasks').innerText = tCount.count || 0;
-      
-      const pData = proofs.data || [];
-      const dData = deposits.data || [];
-      const wData = withdrawals.data || [];
-      const kData = kyc.data || [];
+        document.getElementById('cUsers').innerText = uCount.count || 0;
+        document.getElementById('cTasks').innerText = tCount.count || 0;
+        
+        const pData = proofs.data || [];
+        const dData = deposits.data || [];
+        const wData = withdrawals.data || [];
+        const kData = kyc.data || [];
 
-      document.getElementById('cProofs').innerText = pData.length;
-      document.getElementById('badgeProofs').innerText = pData.length;
-      document.getElementById('cDeposits').innerText = dData.length;
-      document.getElementById('badgeDeposits').innerText = dData.length;
-      document.getElementById('cWithdrawals').innerText = wData.length;
-      document.getElementById('badgeWithdrawals').innerText = wData.length;
-      document.getElementById('badgeKyc').innerText = kData.length;
+        document.getElementById('cProofs').innerText = pData.length;
+        document.getElementById('badgeProofs').innerText = pData.length;
+        document.getElementById('cDeposits').innerText = dData.length;
+        document.getElementById('badgeDeposits').innerText = dData.length;
+        document.getElementById('cWithdrawals').innerText = wData.length;
+        document.getElementById('badgeWithdrawals').innerText = wData.length;
+        document.getElementById('badgeKyc').innerText = kData.length;
 
-      renderProofs(pData);
-      renderDeposits(dData);
-      renderWithdrawals(wData);
-      renderKyc(kData);
+        renderProofs(pData);
+        renderDeposits(dData);
+        renderWithdrawals(wData);
+        renderKyc(kData);
+      } catch (err) {
+        console.error('Data sync error:', err);
+      }
     }
 
     function renderProofs(items) {
@@ -389,10 +393,10 @@
         <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
           <div class="flex justify-between items-start">
             <div>
-              <h5 class="text-xs font-black text-slate-900">${esc(k.profiles?.full_name)}</h5>
+              <h5 class="text-xs font-black text-slate-900">User: ${esc(k.user_id).slice(0,8)}...</h5>
               <p class="text-[11px] text-slate-500">Doc: <b class="font-mono">${esc(k.id_type?.toUpperCase())} - ${esc(k.id_number)}</b></p>
             </div>
-            <span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold">@${esc(k.profiles?.username)}</span>
+            <span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-bold">Pending</span>
           </div>
           ${k.front_image ? `
             <a href="${esc(k.front_image)}" target="_blank" class="block border rounded-xl overflow-hidden bg-white">
