@@ -1,70 +1,379 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><title>Social Task Hub — Admin</title><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script><script src="https://cdn.tailwindcss.com"></script></head><body class="bg-slate-100 text-slate-900"><main class="max-w-6xl mx-auto p-4 md:p-8"><div class="flex items-center justify-between mb-6"><div><h1 class="text-2xl font-black">Social Task Hub Admin</h1><p class="text-xs text-slate-500">Secure operations console • Firebase RTDB</p></div><button onclick="logout()" class="px-4 py-2 rounded-xl bg-white border text-xs font-bold">Logout</button></div>
-<section id="loginPanel" class="max-w-md mx-auto bg-white rounded-2xl p-5 shadow"><h2 class="font-black mb-3">Admin sign in</h2><input id="email" type="email" placeholder="Admin email" class="w-full border rounded-xl p-3 mb-2"><input id="pass" type="password" placeholder="Password" class="w-full border rounded-xl p-3 mb-3"><button onclick="loginAdmin()" class="w-full bg-indigo-600 text-white rounded-xl p-3 font-black">Sign in</button><button type="button" onclick="resetAdminPassword()" class="w-full mt-2 bg-white border border-slate-200 text-slate-700 rounded-xl p-2.5 text-xs font-bold">Reset admin password</button><p id="loginMsg" class="text-xs text-rose-600 mt-3"></p></section>
-<section id="app" class="hidden space-y-5"><div class="grid grid-cols-2 md:grid-cols-5 gap-3"><div class="bg-white p-4 rounded-2xl"><b id="cUsers">0</b><p class="text-xs text-slate-500">Users</p></div><div class="bg-white p-4 rounded-2xl"><b id="cTasks">0</b><p class="text-xs text-slate-500">Tasks</p></div><div class="bg-white p-4 rounded-2xl"><b id="cProofs">0</b><p class="text-xs text-slate-500">Pending Proofs</p></div><div class="bg-white p-4 rounded-2xl"><b id="cDeposits">0</b><p class="text-xs text-slate-500">Deposits</p></div><div class="bg-white p-4 rounded-2xl"><b id="cWithdrawals">0</b><p class="text-xs text-slate-500">Withdrawals</p></div></div>
-<div class="grid md:grid-cols-2 gap-5"><section class="bg-white rounded-2xl p-4"><div class="flex justify-between items-center mb-3"><h2 class="font-black">Proof Verification</h2><button onclick="loadAll()" class="text-xs font-bold text-indigo-600">Refresh</button></div><div id="proofs" class="space-y-2 max-h-[520px] overflow-auto"></div></section><section class="bg-white rounded-2xl p-4"><h2 class="font-black mb-3">Deposits</h2><div id="deposits" class="space-y-2 max-h-[520px] overflow-auto"></div></section><section class="bg-white rounded-2xl p-4"><h2 class="font-black mb-3">Withdrawals</h2><div id="withdrawals" class="space-y-2 max-h-[520px] overflow-auto"></div></section><section class="bg-white rounded-2xl p-4"><h2 class="font-black mb-3">KYC</h2><div id="kyc" class="space-y-2 max-h-[520px] overflow-auto"></div></section></div>
-<section class="bg-white rounded-2xl p-4"><div class="flex justify-between items-center mb-3"><h2 class="font-black">Payment Methods</h2><button onclick="addMethod()" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-black">Add Method</button></div><div id="methods" class="grid md:grid-cols-2 gap-3"></div></section>
-<section class="bg-white rounded-2xl p-4"><h2 class="font-black mb-3">User Wallet Control</h2><div class="flex gap-2"><input id="userUid" placeholder="User UID" class="flex-1 border rounded-xl p-3 text-sm"><button onclick="loadUser()" class="px-4 rounded-xl bg-slate-900 text-white text-xs font-black">Load</button></div><div id="userBox" class="mt-3"></div></section></section></main>
-<script>
-const firebaseConfig={apiKey:"AIzaSyA-w6xbiujrosiCobWmsrbh-i8XR34t19Q",authDomain:"telegram-bot-a7828.firebaseapp.com",databaseURL:"https://telegram-bot-a7828-default-rtdb.firebaseio.com",projectId:"telegram-bot-a7828",storageBucket:"telegram-bot-a7828.firebasestorage.app",messagingSenderId:"898081215662",appId:"1:898081215662:web:93904da94a2cd83154493f"};
-firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.database();let me=null;
-const ADMIN_EMAIL = "nahidislam00m9@gmail.com";
-const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-async function loginAdmin(){
-  const emailEl=document.getElementById('email'), passEl=document.getElementById('pass'), msg=document.getElementById('loginMsg');
-  const emailValue=String(emailEl.value||'').trim().toLowerCase();
-  const passValue=String(passEl.value||'');
-  msg.textContent='Signing in…';
-  if(emailValue!==ADMIN_EMAIL.toLowerCase()){msg.textContent='Admin email must be: '+ADMIN_EMAIL;return}
-  if(!passValue){msg.textContent='Enter the Firebase Authentication password for '+ADMIN_EMAIL;return}
-  try{
-    if(!navigator.onLine){throw Object.assign(new Error('Your device is offline.'),{code:'auth/network-request-failed'})}
-    const signInPromise=auth.signInWithEmailAndPassword(emailValue,passValue);
-    const timeout=new Promise((_,reject)=>setTimeout(()=>reject(Object.assign(new Error('Firebase sign-in timed out after 15 seconds. Check internet, Firebase project, and Authentication settings.'),{code:'AUTH_TIMEOUT'})),15000));
-    const cred=await Promise.race([signInPromise,timeout]);
-    const signedEmail=String(cred.user?.email||'').trim().toLowerCase();
-    if(signedEmail!==ADMIN_EMAIL.toLowerCase()){await auth.signOut();throw Object.assign(new Error('Signed-in account is '+signedEmail+', not '+ADMIN_EMAIL+'.'),{code:'AUTH_EMAIL_MISMATCH'})}
-    msg.textContent='Authentication successful. Loading admin data…';
-  }catch(e){
-    const code=String(e.code||'');
-    const map={
-      'AUTH_TIMEOUT':'Firebase did not respond within 15 seconds. If this file is opened as content://downloads/, first test it from a normal HTTPS hosting URL (Firebase Hosting/GitHub Pages) and verify internet access.',
-      'auth/invalid-credential':'Email/password is incorrect, or this Firebase Authentication user does not exist in the configured project (telegram-bot-a7828).',
-      'auth/user-not-found':'This admin email is not registered in Firebase Authentication for project telegram-bot-a7828.',
-      'auth/wrong-password':'The Firebase Authentication password is incorrect.',
-      'auth/invalid-email':'The admin email format is invalid.',
-      'auth/operation-not-allowed':'Email/Password sign-in is disabled. Enable it in Firebase Authentication → Sign-in method.',
-      'auth/too-many-requests':'Too many failed attempts. Wait and try again or reset the password.',
-      'auth/network-request-failed':'Network error. Check internet access, VPN/ad-blocker, or browser restrictions.',
-      'auth/unauthorized-domain':'This website domain is not authorized in Firebase Authentication → Settings → Authorized domains.',
-      'AUTH_EMAIL_MISMATCH':'The signed-in Firebase account email does not match the admin email.'
-    };
-    msg.textContent=(map[code]||('Login failed: '+(e.message||code||'Unknown error')))+' ['+code+']';
-  }
-}
-async function resetAdminPassword(){
-  const emailValue=String(document.getElementById('email').value||ADMIN_EMAIL).trim().toLowerCase()||ADMIN_EMAIL.toLowerCase();
-  try{await auth.sendPasswordResetEmail(emailValue);loginMsg.textContent='Password reset email sent to '+emailValue+'. Check inbox/spam.'}
-  catch(e){loginMsg.textContent='Password reset failed: '+(e.message||e.code)}
-}
-document.getElementById('pass').addEventListener('keydown',e=>{if(e.key==='Enter')loginAdmin()});
-function logout(){auth.signOut()}
-auth.onAuthStateChanged(async u=>{me=u;const panel=document.getElementById('loginPanel');const appPanel=document.getElementById('app');if(!u){panel.classList.remove('hidden');appPanel.classList.add('hidden');return}const signedInEmail=String(u.email||'').trim().toLowerCase();const allowedEmail=String(ADMIN_EMAIL||'').trim().toLowerCase();if(!allowedEmail||allowedEmail==='your_email@gmail.com'){loginMsg.textContent='Admin email is not configured.';await auth.signOut();return}if(signedInEmail!==allowedEmail){loginMsg.textContent='Access Denied: signed-in email is '+signedInEmail+'.';await auth.signOut();return}loginMsg.textContent='Authentication successful. Loading admin data…';panel.classList.add('hidden');appPanel.classList.remove('hidden');loadAll()});
-async function vals(path){const s=await db.ref(path).once('value');return s.val()||{}}
-async function q(path,order,limit=100){let ref=db.ref(path);if(order)ref=ref.orderByChild(order);ref=ref.limitToLast(limit);const s=await ref.once('value');return s.val()||{}}
-async function loadAll(){try{const [u,t,p,d,w,k,m]=await Promise.all([q('users','profile/createdAt',50),q('tasks','createdAt',300),q('proofRequests','submittedAt',100),q('depositRequests','createdAt',100),q('withdrawals','createdAt',100),q('kycRequests','createdAt',100),vals('paymentMethods')]);cUsers.textContent=Object.keys(u).length+' loaded';cTasks.textContent=Object.keys(t).length+' loaded';cProofs.textContent=Object.values(p).filter(x=>x.status==='pending').length;cDeposits.textContent=Object.values(d).filter(x=>x.status==='pending').length;cWithdrawals.textContent=Object.values(w).filter(x=>String(x.status).toLowerCase()==='pending').length;renderProofs(p);renderDeposits(d);renderWithdrawals(w);renderKyc(k);renderMethods(m)}catch(e){alert('Admin read failed: '+e.message)}}
-function renderProofs(x){proofs.innerHTML=Object.values(x).filter(v=>v.status==='pending').sort((a,b)=>(b.submittedAt||0)-(a.submittedAt||0)).slice(0,100).map(p=>`<div class="border rounded-xl p-3"><div class="flex justify-between"><b class="text-xs">${esc(p.taskTitle||'Proof')}</b><span class="text-[10px]">${esc(p.verificationStatus||'pending')}</span></div><p class="text-[10px] text-slate-500">@${esc(p.workerHandle)} • ${Number(p.rewardPoints||0)} PTS • confidence ${(Number(p.verificationConfidence||0)*100).toFixed(0)}%</p><p class="text-[10px] mt-1">Checks: ${esc(JSON.stringify(p.verificationChecks||{}))}</p>${(p.cloudinaryUrl||p.screenshotImg)?`<a href="${esc(p.cloudinaryUrl||p.screenshotImg)}" target="_blank" rel="noopener noreferrer" class="block mt-2"><img src="${esc(p.cloudinaryUrl||p.screenshotImg)}" alt="Proof screenshot" class="w-full max-h-52 object-contain rounded-xl border bg-slate-50" loading="lazy" onerror="this.style.display='none'"></a>`:''}<div class="flex gap-2 mt-2"><button onclick="decideProof('${esc(p.id)}','approved')" class="flex-1 bg-emerald-600 text-white rounded-lg py-2 text-xs font-bold">Approve</button><button onclick="decideProof('${esc(p.id)}','rejected')" class="flex-1 bg-rose-50 text-rose-600 rounded-lg py-2 text-xs font-bold">Reject</button></div></div>`).join('')||empty('No pending proofs')}
-function renderDeposits(x){deposits.innerHTML=Object.values(x).filter(v=>v.status==='pending').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,100).map(d=>`<div class="border rounded-xl p-3"><b class="text-xs">${esc(d.method)} • ৳${Number(d.amountBdt||0).toFixed(2)}</b><p class="text-[10px] text-slate-500">${esc(d.userHandle)} • sender ${esc(d.senderAccount)} • ref ${esc(d.referenceId)}</p><div class="flex gap-2 mt-2"><button onclick="decideDeposit('${esc(d.id)}','approved')" class="flex-1 bg-emerald-600 text-white rounded-lg py-2 text-xs font-bold">Approve</button><button onclick="decideDeposit('${esc(d.id)}','rejected')" class="flex-1 bg-rose-50 text-rose-600 rounded-lg py-2 text-xs font-bold">Reject</button></div></div>`).join('')||empty('No pending deposits')}
-function renderWithdrawals(x){withdrawals.innerHTML=Object.values(x).filter(v=>String(v.status).toLowerCase()==='pending').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,100).map(w=>`<div class="border rounded-xl p-3"><b class="text-xs">${esc(w.method)} • ${Number(w.pts||0).toLocaleString()} PTS</b><p class="text-[10px] text-slate-500">${esc(w.userUid)} • ${esc(w.account||'')} • ৳${Number(w.bdt||0).toFixed(2)}</p><div class="flex gap-2 mt-2"><button onclick="decideWithdrawal('${esc(w.id)}','Paid')" class="flex-1 bg-emerald-600 text-white rounded-lg py-2 text-xs font-bold">Mark Paid</button><button onclick="decideWithdrawal('${esc(w.id)}','Rejected')" class="flex-1 bg-rose-50 text-rose-600 rounded-lg py-2 text-xs font-bold">Reject</button></div></div>`).join('')||empty('No pending withdrawals')}
-function renderKyc(x){kyc.innerHTML=Object.values(x).filter(v=>v.status==='pending').map(v=>`<div class="border rounded-xl p-3"><b class="text-xs">${esc(v.fullName)} • ${esc(v.documentType)}</b><p class="text-[10px] text-slate-500">${esc(v.userUid)} • ${esc(v.phone)} • document ${esc(v.documentNumber)}</p><div class="flex gap-2 mt-2"><button onclick="decideKyc('${esc(v.id)}','approved')" class="flex-1 bg-emerald-600 text-white rounded-lg py-2 text-xs font-bold">Approve</button><button onclick="decideKyc('${esc(v.id)}','rejected')" class="flex-1 bg-rose-50 text-rose-600 rounded-lg py-2 text-xs font-bold">Reject</button></div></div>`).join('')||empty('No pending KYC')}
-function renderMethods(x){methods.innerHTML=Object.values(x).map(m=>`<div class="border rounded-xl p-3"><div class="flex justify-between"><b>${esc(m.name)}</b><span class="text-xs">${m.active?'Active':'Off'}</span></div><p class="text-[10px] text-slate-500">${esc(m.type)} • ${esc(m.receiverNumber||m.walletAddress||m.bankAccountNumber||m.address||'')}</p><button onclick="editMethod('${esc(m.id)}')" class="mt-2 w-full bg-slate-100 rounded-lg py-2 text-xs font-bold">Edit</button></div>`).join('')||empty('No payment methods')}
-const empty=t=>`<div class="text-xs text-slate-400 p-4 text-center">${t}</div>`;
-async function audit(path,id,status,extra={}){await db.ref(path+'/'+id).update({status,...extra,reviewedAt:firebase.database.ServerValue.TIMESTAMP,reviewedBy:me.uid});await db.ref('adminAuditLogs/log_'+Date.now()).set({adminUid:me.uid,action:path+'/'+id,status,createdAt:firebase.database.ServerValue.TIMESTAMP});loadAll()}
-function decideProof(id,s){return audit('proofRequests',id,s==='approved'?'pending_admin_approved':'rejected',{adminDecision:s})}
-function decideDeposit(id,s){return audit('depositRequests',id,s,{adminDecision:s})}
-function decideWithdrawal(id,s){return audit('withdrawals',id,s,{adminDecision:s})}
-function decideKyc(id,s){return audit('kycRequests',id,s,{adminDecision:s})}
-async function loadUser(){const id=userUid.value.trim();if(!id)return;const u=(await vals('users/'+id));if(!u||!u.uid){userBox.innerHTML=empty('User not found');return}userBox.innerHTML=`<div class="border rounded-xl p-3"><b>${esc(u.profile?.name||'User')} @${esc(u.profile?.handle||'')}</b><p class="text-xs mt-1">UID: ${esc(u.uid)} • Balance: ${Number(u.points||0).toLocaleString()} PTS</p><div class="flex gap-2 mt-3"><input id="newPts" type="number" value="${Number(u.points||0)}" class="flex-1 border rounded-xl p-2"><button onclick="setPoints('${esc(id)}')" class="px-4 bg-indigo-600 text-white rounded-xl text-xs font-bold">Set Balance</button></div></div>`}
-async function setPoints(id){const n=Number(document.getElementById('newPts').value);if(!Number.isFinite(n)||n<0)return alert('Invalid balance');await db.ref('users/'+id+'/points').set(n);await db.ref('adminAuditLogs/log_'+Date.now()).set({adminUid:me.uid,action:'set_points',targetUid:id,value:n,createdAt:firebase.database.ServerValue.TIMESTAMP});loadUser()}
-async function addMethod(){const id=prompt('Method ID (e.g. bKash2)');if(!id)return;await db.ref('paymentMethods/'+id).set({id,name:prompt('Name',id)||id,active:true,type:prompt('Type: mobile/binance/wallet/address/bank/text','mobile')||'text',instructions:prompt('Instructions','')||''});loadAll()}
-async function editMethod(id){const x=await vals('paymentMethods/'+id);const name=prompt('Name',x.name||id);if(name===null)return;const active=confirm('OK = Active, Cancel = Inactive');const ask=(label,old)=>{const v=prompt(label,old||'');return v===null?(old||''):v};const receiverNumber=ask('Receiver number',x.receiverNumber);const receiverName=ask('Receiver name',x.receiverName);const bankName=ask('Bank name',x.bankName);const bankAccountNumber=ask('Bank account number',x.bankAccountNumber);const bankAccountName=ask('Account name',x.bankAccountName);const routingNumber=ask('Routing number',x.routingNumber);const walletAddress=ask('Wallet address',x.walletAddress);const network=ask('Network',x.network);const address=ask('Address',x.address);const instructions=ask('Instructions',x.instructions);await db.ref('paymentMethods/'+id).update({name,active,receiverNumber,receiverName,bankName,bankAccountNumber,bankAccountName,routingNumber,walletAddress,network,address,instructions,updatedAt:firebase.database.ServerValue.TIMESTAMP,updatedBy:me.uid});loadAll()}
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <title>Social Task Hub — Admin</title>
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-900">
+  <main class="max-w-6xl mx-auto p-4 md:p-8">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-black">Social Task Hub Admin</h1>
+        <p class="text-xs text-slate-500">Secure Operations Console • Supabase Engine</p>
+      </div>
+      <button id="btnLogout" onclick="logoutAdmin()" class="hidden px-4 py-2 rounded-xl bg-white border text-xs font-bold shadow-sm hover:bg-slate-50">Logout</button>
+    </div>
+
+    <!-- Admin Sign In Panel -->
+    <section id="loginPanel" class="max-w-md mx-auto bg-white rounded-2xl p-5 shadow">
+      <h2 class="font-black mb-3">Admin Sign In</h2>
+      <input id="email" type="email" placeholder="Admin email" class="w-full border rounded-xl p-3 mb-2 text-sm focus:outline-none focus:border-indigo-600">
+      <input id="pass" type="password" placeholder="Password" class="w-full border rounded-xl p-3 mb-3 text-sm focus:outline-none focus:border-indigo-600">
+      <button onclick="loginAdmin()" id="btnLogin" class="w-full bg-indigo-600 text-white rounded-xl p-3 font-black text-sm active:scale-95 transition">Sign In</button>
+      <p id="loginMsg" class="text-xs text-rose-600 mt-3 font-medium"></p>
+    </section>
+
+    <!-- Main Dashboard Section -->
+    <section id="app" class="hidden space-y-5">
+      <!-- Counters Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100"><b id="cUsers" class="text-lg">0</b><p class="text-xs text-slate-500 font-semibold">Users</p></div>
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100"><b id="cTasks" class="text-lg">0</b><p class="text-xs text-slate-500 font-semibold">Active Tasks</p></div>
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100"><b id="cProofs" class="text-lg text-amber-600">0</b><p class="text-xs text-slate-500 font-semibold">Pending Proofs</p></div>
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100"><b id="cDeposits" class="text-lg text-emerald-600">0</b><p class="text-xs text-slate-500 font-semibold">Pending Deposits</p></div>
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100"><b id="cWithdrawals" class="text-lg text-rose-600">0</b><p class="text-xs text-slate-500 font-semibold">Pending Withdrawals</p></div>
+      </div>
+
+      <!-- Action Queues Grid -->
+      <div class="grid md:grid-cols-2 gap-5">
+        <!-- Proofs -->
+        <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+          <div class="flex justify-between items-center mb-3">
+            <h2 class="font-black text-sm">Proof Verification</h2>
+            <button onclick="loadAll()" class="text-xs font-bold text-indigo-600 hover:underline">Refresh</button>
+          </div>
+          <div id="proofs" class="space-y-2 max-h-[520px] overflow-auto"></div>
+        </section>
+
+        <!-- Deposits -->
+        <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+          <h2 class="font-black text-sm mb-3">Deposit Requests</h2>
+          <div id="deposits" class="space-y-2 max-h-[520px] overflow-auto"></div>
+        </section>
+
+        <!-- Withdrawals -->
+        <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+          <h2 class="font-black text-sm mb-3">Withdrawal Requests</h2>
+          <div id="withdrawals" class="space-y-2 max-h-[520px] overflow-auto"></div>
+        </section>
+
+        <!-- KYC Verification -->
+        <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+          <h2 class="font-black text-sm mb-3">KYC Verification</h2>
+          <div id="kyc" class="space-y-2 max-h-[520px] overflow-auto"></div>
+        </section>
+      </div>
+
+      <!-- User Wallet Balance Manual Override -->
+      <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+        <h2 class="font-black text-sm mb-3">User Wallet & Role Control</h2>
+        <div class="flex gap-2">
+          <input id="userSearchInput" placeholder="User Email, Username or UUID" class="flex-1 border rounded-xl p-3 text-xs focus:outline-none focus:border-indigo-600">
+          <button onclick="loadUser()" class="px-5 rounded-xl bg-slate-900 text-white text-xs font-black active:scale-95 transition">Search User</button>
+        </div>
+        <div id="userBox" class="mt-3"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    // Supabase Credentials
+    const SUPABASE_URL = 'https://yijjfsuiuhtfhzqasfjp.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlpampmc3VpdWh0Zmh6cWFzZmpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MzYzODUsImV4cCI6MjEwNDIxMjM4NX0.ksHTXtTABkjKyaTQcjyrsHafxDYbQLk55IzyW2IZhtw';
+    
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentAdmin = null;
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    const empty = t => `<div class="text-xs text-slate-400 p-4 text-center border border-dashed rounded-xl">${t}</div>`;
+
+    async function initAdminAuth() {
+      const { data: { session } } = await sb.auth.getSession();
+      await verifyAdminSession(session?.user || null);
+
+      sb.auth.onAuthStateChange(async (_event, session) => {
+        await verifyAdminSession(session?.user || null);
+      });
+    }
+
+    async function verifyAdminSession(user) {
+      const panel = document.getElementById('loginPanel');
+      const app = document.getElementById('app');
+      const btnLogout = document.getElementById('btnLogout');
+      const msg = document.getElementById('loginMsg');
+
+      if (!user) {
+        currentAdmin = null;
+        panel.classList.remove('hidden');
+        app.classList.add('hidden');
+        btnLogout.classList.add('hidden');
+        return;
+      }
+
+      const { data: profile, error } = await sb
+        .from('profiles')
+        .select('role, full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (error || profile?.role !== 'admin') {
+        msg.textContent = 'Access Denied: Account does not possess Admin privileges.';
+        await sb.auth.signOut();
+        panel.classList.remove('hidden');
+        app.classList.add('hidden');
+        btnLogout.classList.add('hidden');
+        return;
+      }
+
+      currentAdmin = user;
+      panel.classList.add('hidden');
+      app.classList.remove('hidden');
+      btnLogout.classList.remove('hidden');
+      loadAll();
+    }
+
+    async function loginAdmin() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('pass').value;
+      const msg = document.getElementById('loginMsg');
+      const btn = document.getElementById('btnLogin');
+
+      if (!email || !password) {
+        msg.textContent = 'Please provide both email and password.';
+        return;
+      }
+
+      msg.textContent = 'Signing in…';
+      btn.disabled = true;
+
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) {
+        msg.textContent = 'Login failed: ' + error.message;
+        btn.disabled = false;
+        return;
+      }
+
+      btn.disabled = false;
+    }
+
+    async function logoutAdmin() {
+      await sb.auth.signOut();
+    }
+
+    document.getElementById('pass').addEventListener('keydown', e => {
+      if (e.key === 'Enter') loginAdmin();
+    });
+
+    async function loadAll() {
+      try {
+        const [usersRes, tasksRes, proofsRes, depositsRes, withdrawalsRes, kycRes] = await Promise.all([
+          sb.from('profiles').select('id', { count: 'exact' }),
+          sb.from('tasks').select('*').eq('status', 'active'),
+          sb.from('proofs').select('*, tasks(title, reward_points)').eq('status', 'pending'),
+          sb.from('transactions').select('*, profiles(username, full_name)').eq('type', 'deposit').eq('status', 'pending'),
+          sb.from('transactions').select('*, profiles(username, full_name)').eq('type', 'withdrawal').eq('status', 'pending'),
+          sb.from('kyc_records').select('*, profiles(username, full_name)').eq('status', 'pending')
+        ]);
+
+        document.getElementById('cUsers').textContent = usersRes.count || 0;
+        document.getElementById('cTasks').textContent = tasksRes.data?.length || 0;
+        document.getElementById('cProofs').textContent = proofsRes.data?.length || 0;
+        document.getElementById('cDeposits').textContent = depositsRes.data?.length || 0;
+        document.getElementById('cWithdrawals').textContent = withdrawalsRes.data?.length || 0;
+
+        renderProofs(proofsRes.data || []);
+        renderDeposits(depositsRes.data || []);
+        renderWithdrawals(withdrawalsRes.data || []);
+        renderKyc(kycRes.data || []);
+      } catch (err) {
+        alert('Data read error: ' + err.message);
+      }
+    }
+
+    function renderProofs(items) {
+      const container = document.getElementById('proofs');
+      if (!items.length) { container.innerHTML = empty('No pending proofs'); return; }
+      container.innerHTML = items.map(p => `
+        <div class="border rounded-xl p-3 bg-slate-50 space-y-2">
+          <div class="flex justify-between items-center">
+            <b class="text-xs text-slate-800">${esc(p.tasks?.title || 'Task Submission')}</b>
+            <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">+${p.tasks?.reward_points || 15} PTS</span>
+          </div>
+          <p class="text-[11px] text-slate-500">Worker Handle: <b class="text-slate-800">@${esc(p.worker_handle)}</b></p>
+          ${p.screenshot_url ? `
+            <a href="${esc(p.screenshot_url)}" target="_blank" rel="noopener noreferrer" class="block">
+              <img src="${esc(p.screenshot_url)}" class="w-full max-h-48 object-contain rounded-xl border bg-white shadow-sm" loading="lazy">
+            </a>` : ''}
+          <div class="flex gap-2 pt-1">
+            <button onclick="decideProof('${p.id}', '${p.task_id}', '${p.worker_id}', ${p.tasks?.reward_points || 15}, 'approved')" class="flex-1 bg-emerald-600 text-white rounded-lg py-2 text-xs font-bold active:scale-95 transition">Approve & Credit</button>
+            <button onclick="decideProof('${p.id}', '${p.task_id}', '${p.worker_id}', 0, 'rejected')" class="flex-1 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg py-2 text-xs font-bold active:scale-95 transition">Reject</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderDeposits(items) {
+      const container = document.getElementById('deposits');
+      if (!items.length) { container.innerHTML = empty('No pending deposits'); return; }
+      container.innerHTML = items.map(d => `
+        <div class="border rounded-xl p-3 bg-slate-50 space-y-1">
+          <div class="flex justify-between">
+            <b class="text-xs uppercase text-slate-900">${esc(d.gateway || 'Method')} • ৳${Number(d.amount_bdt || 0).toFixed(2)}</b>
+            <span class="text-[10px] text-emerald-600 font-bold">+${d.points} PTS</span>
+          </div>
+          <p class="text-[10px] text-slate-500">User: <b>@${esc(d.profiles?.username || 'User')}</b> • TrxID: <span class="font-mono bg-white px-1.5 py-0.5 border rounded">${esc(d.trx_id || 'N/A')}</span></p>
+          <div class="flex gap-2 mt-2">
+            <button onclick="decideDeposit('${d.id}', '${d.user_id}', ${d.points}, 'completed')" class="flex-1 bg-emerald-600 text-white rounded-lg py-1.5 text-xs font-bold active:scale-95 transition">Approve Deposit</button>
+            <button onclick="decideDeposit('${d.id}', '${d.user_id}', 0, 'rejected')" class="flex-1 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg py-1.5 text-xs font-bold active:scale-95 transition">Reject</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderWithdrawals(items) {
+      const container = document.getElementById('withdrawals');
+      if (!items.length) { container.innerHTML = empty('No pending withdrawals'); return; }
+      container.innerHTML = items.map(w => `
+        <div class="border rounded-xl p-3 bg-slate-50 space-y-1">
+          <div class="flex justify-between">
+            <b class="text-xs uppercase text-slate-900">${esc(w.gateway || 'Method')} • ৳${Number(w.amount_bdt || 0).toFixed(2)}</b>
+            <span class="text-[10px] text-rose-600 font-bold">-${w.points} PTS</span>
+          </div>
+          <p class="text-[10px] text-slate-500">User: <b>@${esc(w.profiles?.username || 'User')}</b></p>
+          <div class="flex gap-2 mt-2">
+            <button onclick="decideWithdrawal('${w.id}', '${w.user_id}', ${w.points}, 'completed')" class="flex-1 bg-emerald-600 text-white rounded-lg py-1.5 text-xs font-bold active:scale-95 transition">Mark Paid</button>
+            <button onclick="decideWithdrawal('${w.id}', '${w.user_id}', ${w.points}, 'rejected')" class="flex-1 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg py-1.5 text-xs font-bold active:scale-95 transition">Reject & Refund</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderKyc(items) {
+      const container = document.getElementById('kyc');
+      if (!items.length) { container.innerHTML = empty('No pending KYC submissions'); return; }
+      container.innerHTML = items.map(k => `
+        <div class="border rounded-xl p-3 bg-slate-50 space-y-2">
+          <div class="flex justify-between">
+            <b class="text-xs">${esc(k.profiles?.full_name || 'User')} • ${esc(k.id_type?.toUpperCase())}</b>
+            <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">@${esc(k.profiles?.username)}</span>
+          </div>
+          <p class="text-[10px] text-slate-500 font-mono">Doc No: ${esc(k.id_number)}</p>
+          ${k.front_image ? `
+            <a href="${esc(k.front_image)}" target="_blank" class="text-[10px] text-indigo-600 font-bold underline block">View ID Document Image ↗</a>
+          ` : ''}
+          <div class="flex gap-2 mt-2">
+            <button onclick="decideKyc('${k.id}', '${k.user_id}', 'verified')" class="flex-1 bg-emerald-600 text-white rounded-lg py-1.5 text-xs font-bold active:scale-95 transition">Verify ID</button>
+            <button onclick="decideKyc('${k.id}', '${k.user_id}', 'rejected')" class="flex-1 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg py-1.5 text-xs font-bold active:scale-95 transition">Reject</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function decideProof(proofId, taskId, workerId, rewardPoints, status) {
+      const { error: pErr } = await sb.from('proofs').update({ status }).eq('id', proofId);
+      if (pErr) return alert('Update failed: ' + pErr.message);
+
+      if (status === 'approved') {
+        const { data: t } = await sb.from('tasks').select('completed_count').eq('id', taskId).single();
+        if (t) await sb.from('tasks').update({ completed_count: (t.completed_count || 0) + 1 }).eq('id', taskId);
+
+        const { data: prof } = await sb.from('profiles').select('points').eq('id', workerId).single();
+        if (prof) await sb.from('profiles').update({ points: (prof.points || 0) + rewardPoints }).eq('id', workerId);
+
+        await sb.from('transactions').insert([{
+          user_id: workerId,
+          type: 'reward',
+          points: rewardPoints,
+          status: 'completed'
+        }]);
+      }
+      loadAll();
+    }
+
+    async function decideDeposit(txId, userId, points, status) {
+      const { error } = await sb.from('transactions').update({ status }).eq('id', txId);
+      if (error) return alert(error.message);
+
+      if (status === 'completed') {
+        const { data: prof } = await sb.from('profiles').select('points').eq('id', userId).single();
+        if (prof) await sb.from('profiles').update({ points: (prof.points || 0) + points }).eq('id', userId);
+      }
+      loadAll();
+    }
+
+    async function decideWithdrawal(txId, userId, points, status) {
+      const { error } = await sb.from('transactions').update({ status }).eq('id', txId);
+      if (error) return alert(error.message);
+
+      if (status === 'rejected') {
+        const { data: prof } = await sb.from('profiles').select('points').eq('id', userId).single();
+        if (prof) await sb.from('profiles').update({ points: (prof.points || 0) + points }).eq('id', userId);
+      }
+      loadAll();
+    }
+
+    async function decideKyc(kycId, userId, status) {
+      const { error } = await sb.from('kyc_records').update({ status }).eq('id', kycId);
+      if (error) return alert(error.message);
+
+      if (status === 'verified') {
+        await sb.from('profiles').update({ is_verified: true }).eq('id', userId);
+      }
+      loadAll();
+    }
+
+    async function loadUser() {
+      const q = document.getElementById('userSearchInput').value.trim();
+      const container = document.getElementById('userBox');
+      if (!q) return;
+
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q);
+      let query = sb.from('profiles').select('*');
+      if (isUuid) query = query.eq('id', q);
+      else query = query.or(`username.ilike.%${q}%,full_name.ilike.%${q}%`);
+
+      const { data, error } = await query.limit(1).single();
+      if (error || !data) { container.innerHTML = empty('User not found'); return; }
+
+      container.innerHTML = `
+        <div class="border rounded-xl p-4 bg-slate-50 space-y-3">
+          <div class="flex justify-between items-center">
+            <div>
+              <b class="text-sm text-slate-900">${esc(data.full_name)} (@${esc(data.username)})</b>
+              <p class="text-[10px] text-slate-400 font-mono">UUID: ${esc(data.id)}</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full font-bold ${data.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-200 text-slate-700'}">${data.role?.toUpperCase()}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-600">Points:</span>
+            <input id="targetUserPts" type="number" value="${data.points || 0}" class="border rounded-xl px-3 py-1.5 text-xs font-black w-32 focus:outline-none focus:border-indigo-600">
+            <button onclick="updateUserBalance('${data.id}')" class="px-4 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold active:scale-95 transition">Update Balance</button>
+            <button onclick="toggleUserRole('${data.id}', '${data.role}')" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-bold active:scale-95 transition">Toggle Role</button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function updateUserBalance(userId) {
+      const pts = parseInt(document.getElementById('targetUserPts').value, 10);
+      if (isNaN(pts) || pts < 0) return alert('Invalid points');
+      const { error } = await sb.from('profiles').update({ points: pts }).eq('id', userId);
+      if (error) alert('Update error: ' + error.message);
+      else { alert('Balance updated.'); loadUser(); }
+    }
+
+    async function toggleUserRole(userId, currentRole) {
+      const newRole = currentRole === 'admin' ? 'user' : 'admin';
+      const { error } = await sb.from('profiles').update({ role: newRole }).eq('id', userId);
+      if (error) alert('Role update error: ' + error.message);
+      else { alert(`User role updated to ${newRole}`); loadUser(); }
+    }
+
+    document.addEventListener('DOMContentLoaded', initAdminAuth);
+  </script>
+</body>
+</html>
