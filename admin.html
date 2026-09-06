@@ -3,136 +3,237 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-  <title>Social Task Hub — Admin</title>
-  <!-- Supabase JS Client SDK -->
+  <title>Social Task Hub — Admin Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
 </head>
-<body class="bg-slate-100 text-slate-900">
-  <main class="max-w-6xl mx-auto p-4 md:p-8">
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="text-2xl font-black">Social Task Hub Admin</h1>
-        <p class="text-xs text-slate-500">Secure Operations Console • Supabase Engine</p>
-      </div>
-      <button id="btnLogout" onclick="logoutAdmin()" class="hidden px-4 py-2 rounded-xl bg-white border text-xs font-bold shadow-sm hover:bg-slate-50">Logout</button>
-    </div>
+<body class="bg-[#F4F6F9] text-slate-800 antialiased">
 
-    <!-- Admin Sign In Panel -->
-    <section id="loginPanel" class="max-w-md mx-auto bg-white rounded-2xl p-5 shadow">
-      <h2 class="font-black mb-3">Admin Sign In</h2>
-      <input id="email" type="email" placeholder="Admin email" class="w-full border rounded-xl p-3 mb-2 text-sm focus:outline-none focus:border-indigo-600">
-      <input id="pass" type="password" placeholder="Password" class="w-full border rounded-xl p-3 mb-3 text-sm focus:outline-none focus:border-indigo-600">
-      <button onclick="loginAdmin()" id="btnLogin" class="w-full bg-indigo-600 text-white rounded-xl p-3 font-black text-sm active:scale-95 transition">Sign In</button>
-      <p id="loginMsg" class="text-xs text-rose-600 mt-3 font-medium"></p>
-    </section>
-
-    <!-- Main Dashboard Section -->
-    <section id="app" class="hidden space-y-5">
-      <!-- Counters Grid -->
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100"><b id="cUsers" class="text-lg">0</b><p class="text-xs text-slate-500 font-semibold">Users</p></div>
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100"><b id="cTasks" class="text-lg">0</b><p class="text-xs text-slate-500 font-semibold">Active Tasks</p></div>
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100"><b id="cProofs" class="text-lg text-amber-600">0</b><p class="text-xs text-slate-500 font-semibold">Pending Proofs</p></div>
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100"><b id="cDeposits" class="text-lg text-emerald-600">0</b><p class="text-xs text-slate-500 font-semibold">Pending Deposits</p></div>
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100"><b id="cWithdrawals" class="text-lg text-rose-600">0</b><p class="text-xs text-slate-500 font-semibold">Pending Withdrawals</p></div>
-      </div>
-
-      <!-- Action Queues Grid -->
-      <div class="grid md:grid-cols-2 gap-5">
-        <!-- Proofs -->
-        <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-          <div class="flex justify-between items-center mb-3">
-            <h2 class="font-black text-sm">Proof Verification</h2>
-            <button onclick="loadAll()" class="text-xs font-bold text-indigo-600 hover:underline">Refresh</button>
-          </div>
-          <div id="proofs" class="space-y-2 max-h-[520px] overflow-auto"></div>
-        </section>
-
-        <!-- Deposits -->
-        <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-          <h2 class="font-black text-sm mb-3">Deposit Requests</h2>
-          <div id="deposits" class="space-y-2 max-h-[520px] overflow-auto"></div>
-        </section>
-
-        <!-- Withdrawals -->
-        <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-          <h2 class="font-black text-sm mb-3">Withdrawal Requests</h2>
-          <div id="withdrawals" class="space-y-2 max-h-[520px] overflow-auto"></div>
-        </section>
-
-        <!-- KYC Verification -->
-        <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-          <h2 class="font-black text-sm mb-3">KYC Verification</h2>
-          <div id="kyc" class="space-y-2 max-h-[520px] overflow-auto"></div>
-        </section>
-      </div>
-
-      <!-- User Wallet Balance Manual Override -->
-      <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <h2 class="font-black text-sm mb-3">User Wallet & Role Control</h2>
-        <div class="flex gap-2">
-          <input id="userSearchInput" placeholder="User Email, Username or UUID" class="flex-1 border rounded-xl p-3 text-xs focus:outline-none focus:border-indigo-600">
-          <button onclick="loadUser()" class="px-5 rounded-xl bg-slate-900 text-white text-xs font-black active:scale-95 transition">Search User</button>
+  <!-- ADMIN LOGIN OVERLAY -->
+  <section id="loginPanel" class="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+    <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6">
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto text-xl shadow-lg shadow-indigo-500/20">
+          <i class="fa-solid fa-shield-halved"></i>
         </div>
-        <div id="userBox" class="mt-3"></div>
-      </section>
-    </section>
-  </main>
+        <h2 class="text-xl font-black text-white">Admin Operations Panel</h2>
+        <p class="text-xs text-slate-400">Authenticate using master authorization</p>
+      </div>
+      <form onsubmit="event.preventDefault(); loginAdmin();" class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1">Admin Email</label>
+          <input id="email" type="email" required placeholder="admin@example.com" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1">Password</label>
+          <input id="pass" type="password" required placeholder="••••••••" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+        </div>
+        <button id="btnLogin" type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs rounded-xl shadow-lg transition active:scale-95">Sign In</button>
+        <p id="loginMsg" class="text-xs text-rose-400 font-bold text-center"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- DASHBOARD WRAPPER -->
+  <div id="app" class="hidden min-h-screen flex">
+    
+    <!-- LEFT SIDEBAR -->
+    <aside class="w-64 bg-slate-950 text-slate-300 flex flex-col shrink-0 border-r border-slate-900">
+      <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-900">
+        <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm font-black">STH</div>
+        <div>
+          <h1 class="text-xs font-black text-white">Social Task Hub</h1>
+          <p class="text-[9px] font-bold text-indigo-400 uppercase">Super Admin</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto no-scrollbar">
+        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="side-btn active w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md">
+          <span class="flex items-center gap-3"><i class="fa-solid fa-chart-pie w-4 text-center"></i> Overview</span>
+        </button>
+        <button onclick="switchTab('proofs')" id="tab-proofs" class="side-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-900 hover:text-white transition">
+          <span class="flex items-center gap-3"><i class="fa-solid fa-clipboard-check w-4 text-center"></i> Task Proofs</span>
+          <span id="badgeProofs" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-extrabold">0</span>
+        </button>
+        <button onclick="switchTab('deposits')" id="tab-deposits" class="side-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-900 hover:text-white transition">
+          <span class="flex items-center gap-3"><i class="fa-solid fa-circle-arrow-down w-4 text-center"></i> Deposits</span>
+          <span id="badgeDeposits" class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-extrabold">0</span>
+        </button>
+        <button onclick="switchTab('withdrawals')" id="tab-withdrawals" class="side-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-900 hover:text-white transition">
+          <span class="flex items-center gap-3"><i class="fa-solid fa-circle-arrow-up w-4 text-center"></i> Withdrawals</span>
+          <span id="badgeWithdrawals" class="text-[10px] bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded-full font-extrabold">0</span>
+        </button>
+        <button onclick="switchTab('kyc')" id="tab-kyc" class="side-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-900 hover:text-white transition">
+          <span class="flex items-center gap-3"><i class="fa-solid fa-id-card w-4 text-center"></i> Identity KYC</span>
+          <span id="badgeKyc" class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full font-extrabold">0</span>
+        </button>
+        <button onclick="switchTab('users')" id="tab-users" class="side-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-900 hover:text-white transition">
+          <span class="flex items-center gap-3"><i class="fa-solid fa-users w-4 text-center"></i> Users Directory</span>
+        </button>
+      </nav>
+
+      <div class="p-4 border-t border-slate-900">
+        <button onclick="logoutAdmin()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-400 hover:bg-rose-950/40 transition">
+          <i class="fa-solid fa-arrow-right-from-bracket w-4 text-center"></i> Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- RIGHT MAIN WORKSPACE -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- TOPBAR -->
+      <header class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-extrabold text-slate-400">Section:</span>
+          <span id="sectionTitle" class="text-sm font-black text-slate-900 capitalize">Overview</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="loadAll()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700 transition flex items-center gap-2">
+            <i class="fa-solid fa-rotate text-[10px]"></i> Sync Data
+          </button>
+          <div class="flex items-center gap-2 pl-3 border-l border-slate-200">
+            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-black">AD</div>
+            <span id="adminName" class="text-xs font-bold text-slate-800">Admin</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- SCROLLABLE TAB CONTENTS -->
+      <main class="flex-1 overflow-y-auto p-8 no-scrollbar space-y-6">
+        
+        <!-- 1. OVERVIEW SCREEN -->
+        <section id="view-dashboard" class="content-view space-y-6">
+          <div class="grid grid-cols-5 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <p class="text-[11px] font-bold text-slate-400 uppercase">Users Registered</p>
+              <h3 id="cUsers" class="text-2xl font-black text-slate-900 mt-1">0</h3>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <p class="text-[11px] font-bold text-slate-400 uppercase">Active Tasks</p>
+              <h3 id="cTasks" class="text-2xl font-black text-slate-900 mt-1">0</h3>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <p class="text-[11px] font-bold text-slate-400 uppercase">Pending Proofs</p>
+              <h3 id="cProofs" class="text-2xl font-black text-amber-500 mt-1">0</h3>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <p class="text-[11px] font-bold text-slate-400 uppercase">Deposit Inbound</p>
+              <h3 id="cDeposits" class="text-2xl font-black text-emerald-600 mt-1">0</h3>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <p class="text-[11px] font-bold text-slate-400 uppercase">Withdrawals Out</p>
+              <h3 id="cWithdrawals" class="text-2xl font-black text-rose-600 mt-1">0</h3>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <h4 class="text-xs font-black text-slate-900 uppercase">Fast Action: Worker Proof Verification</h4>
+              <div id="overviewProofsFeed" class="space-y-3"></div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <h4 class="text-xs font-black text-slate-900 uppercase">Fast Action: Deposits Pending</h4>
+              <div id="overviewDepositsFeed" class="space-y-3"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. PROOFS SCREEN -->
+        <section id="view-proofs" class="content-view hidden space-y-4">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="text-sm font-black text-slate-900 mb-4">Worker Submission Review</h3>
+            <div id="proofsGrid" class="grid grid-cols-3 gap-4"></div>
+          </div>
+        </section>
+
+        <!-- 3. DEPOSITS SCREEN -->
+        <section id="view-deposits" class="content-view hidden space-y-4">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="text-sm font-black text-slate-900 mb-4">Manual Deposit Verifications</h3>
+            <div id="depositsTable" class="space-y-2.5"></div>
+          </div>
+        </section>
+
+        <!-- 4. WITHDRAWALS SCREEN -->
+        <section id="view-withdrawals" class="content-view hidden space-y-4">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="text-sm font-black text-slate-900 mb-4">Payout Processing</h3>
+            <div id="withdrawalsTable" class="space-y-2.5"></div>
+          </div>
+        </section>
+
+        <!-- 5. KYC SCREEN -->
+        <section id="view-kyc" class="content-view hidden space-y-4">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="text-sm font-black text-slate-900 mb-4">Government ID Validation</h3>
+            <div id="kycGrid" class="grid grid-cols-2 gap-4"></div>
+          </div>
+        </section>
+
+        <!-- 6. USERS SCREEN -->
+        <section id="view-users" class="content-view hidden space-y-4">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="text-sm font-black text-slate-900">User Account & Balance Editor</h3>
+            <div class="flex gap-2 max-w-md">
+              <input id="userSearchInput" type="search" placeholder="Search by Username, Email or UUID..." class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-indigo-600">
+              <button onclick="loadUser()" class="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-black">Search</button>
+            </div>
+            <div id="userBox" class="mt-4"></div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
 
   <script>
-    // Supabase Credentials
     const SUPABASE_URL = 'https://yijjfsuiuhtfhzqasfjp.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlpampmc3VpdWh0Zmh6cWFzZmpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MzYzODUsImV4cCI6MjEwNDIxMjM4NX0.ksHTXtTABkjKyaTQcjyrsHafxDYbQLk55IzyW2IZhtw';
-    
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentAdmin = null;
     const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-    const empty = t => `<div class="text-xs text-slate-400 p-4 text-center border border-dashed rounded-xl">${t}</div>`;
+    const emptyBox = t => `<div class="p-8 text-center text-xs font-bold text-slate-400 border border-dashed border-slate-200 rounded-2xl">${t}</div>`;
 
-    async function initAdminAuth() {
+    async function initAdmin() {
       const { data: { session } } = await sb.auth.getSession();
-      await verifyAdminSession(session?.user || null);
+      await checkAdminAccess(session?.user || null);
 
       sb.auth.onAuthStateChange(async (_event, session) => {
-        await verifyAdminSession(session?.user || null);
+        await checkAdminAccess(session?.user || null);
       });
     }
 
-    async function verifyAdminSession(user) {
-      const panel = document.getElementById('loginPanel');
+    async function checkAdminAccess(user) {
+      const loginPanel = document.getElementById('loginPanel');
       const app = document.getElementById('app');
-      const btnLogout = document.getElementById('btnLogout');
-      const msg = document.getElementById('loginMsg');
 
       if (!user) {
-        currentAdmin = null;
-        panel.classList.remove('hidden');
+        loginPanel.classList.remove('hidden');
         app.classList.add('hidden');
-        btnLogout.classList.add('hidden');
         return;
       }
 
-      const { data: profile, error } = await sb
-        .from('profiles')
-        .select('role, full_name')
-        .eq('id', user.id)
-        .single();
-
-      if (error || profile?.role !== 'admin') {
-        msg.textContent = 'Access Denied: Account does not possess Admin privileges.';
+      const { data: profile } = await sb.from('profiles').select('role, full_name').eq('id', user.id).single();
+      if (profile?.role !== 'admin') {
+        document.getElementById('loginMsg').innerText = 'Access Denied: You do not have super admin permissions.';
         await sb.auth.signOut();
-        panel.classList.remove('hidden');
-        app.classList.add('hidden');
-        btnLogout.classList.add('hidden');
         return;
       }
 
       currentAdmin = user;
-      panel.classList.add('hidden');
+      document.getElementById('adminName').innerText = profile.full_name || 'Super Admin';
+      loginPanel.classList.add('hidden');
       app.classList.remove('hidden');
-      btnLogout.classList.remove('hidden');
       loadAll();
     }
 
@@ -142,141 +243,171 @@
       const msg = document.getElementById('loginMsg');
       const btn = document.getElementById('btnLogin');
 
-      if (!email || !password) {
-        msg.textContent = 'Please provide both email and password.';
-        return;
-      }
-
-      msg.textContent = 'Signing in…';
+      msg.innerText = 'Verifying credentials...';
       btn.disabled = true;
 
-      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      const { error } = await sb.auth.signInWithPassword({ email, password });
       if (error) {
-        msg.textContent = 'Login failed: ' + error.message;
+        msg.innerText = 'Login Failed: ' + error.message;
         btn.disabled = false;
-        return;
       }
-
-      btn.disabled = false;
     }
 
     async function logoutAdmin() {
       await sb.auth.signOut();
+      window.location.reload();
     }
 
-    document.getElementById('pass').addEventListener('keydown', e => {
-      if (e.key === 'Enter') loginAdmin();
-    });
+    function switchTab(tabName) {
+      document.querySelectorAll('.content-view').forEach(v => v.classList.add('hidden'));
+      const activeSection = document.getElementById(`view-${tabName}`);
+      if (activeSection) activeSection.classList.remove('hidden');
+
+      document.querySelectorAll('.side-btn').forEach(b => {
+        b.className = "side-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-900 hover:text-white transition";
+      });
+      const currentTab = document.getElementById(`tab-${tabName}`);
+      if (currentTab) currentTab.className = "side-btn active w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md";
+
+      document.getElementById('sectionTitle').innerText = tabName;
+    }
 
     async function loadAll() {
-      try {
-        const [usersRes, tasksRes, proofsRes, depositsRes, withdrawalsRes, kycRes] = await Promise.all([
-          sb.from('profiles').select('id', { count: 'exact' }),
-          sb.from('tasks').select('*').eq('status', 'active'),
-          sb.from('proofs').select('*, tasks(title, reward_points)').eq('status', 'pending'),
-          sb.from('transactions').select('*, profiles(username, full_name)').eq('type', 'deposit').eq('status', 'pending'),
-          sb.from('transactions').select('*, profiles(username, full_name)').eq('type', 'withdrawal').eq('status', 'pending'),
-          sb.from('kyc_records').select('*, profiles(username, full_name)').eq('status', 'pending')
-        ]);
+      const [uCount, tCount, proofs, deposits, withdrawals, kyc] = await Promise.all([
+        sb.from('profiles').select('id', { count: 'exact', head: true }),
+        sb.from('tasks').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+        sb.from('proofs').select('*, tasks(title, reward_points)').eq('status', 'pending'),
+        sb.from('transactions').select('*, profiles(username)').eq('type', 'deposit').eq('status', 'pending'),
+        sb.from('transactions').select('*, profiles(username)').eq('type', 'withdrawal').eq('status', 'pending'),
+        sb.from('kyc_records').select('*, profiles(username, full_name)').eq('status', 'pending')
+      ]);
 
-        document.getElementById('cUsers').textContent = usersRes.count || 0;
-        document.getElementById('cTasks').textContent = tasksRes.data?.length || 0;
-        document.getElementById('cProofs').textContent = proofsRes.data?.length || 0;
-        document.getElementById('cDeposits').textContent = depositsRes.data?.length || 0;
-        document.getElementById('cWithdrawals').textContent = withdrawalsRes.data?.length || 0;
+      document.getElementById('cUsers').innerText = uCount.count || 0;
+      document.getElementById('cTasks').innerText = tCount.count || 0;
+      
+      const pData = proofs.data || [];
+      const dData = deposits.data || [];
+      const wData = withdrawals.data || [];
+      const kData = kyc.data || [];
 
-        renderProofs(proofsRes.data || []);
-        renderDeposits(depositsRes.data || []);
-        renderWithdrawals(withdrawalsRes.data || []);
-        renderKyc(kycRes.data || []);
-      } catch (err) {
-        alert('Data read error: ' + err.message);
-      }
+      document.getElementById('cProofs').innerText = pData.length;
+      document.getElementById('badgeProofs').innerText = pData.length;
+      document.getElementById('cDeposits').innerText = dData.length;
+      document.getElementById('badgeDeposits').innerText = dData.length;
+      document.getElementById('cWithdrawals').innerText = wData.length;
+      document.getElementById('badgeWithdrawals').innerText = wData.length;
+      document.getElementById('badgeKyc').innerText = kData.length;
+
+      renderProofs(pData);
+      renderDeposits(dData);
+      renderWithdrawals(wData);
+      renderKyc(kData);
     }
 
     function renderProofs(items) {
-      const container = document.getElementById('proofs');
-      if (!items.length) { container.innerHTML = empty('No pending proofs'); return; }
-      container.innerHTML = items.map(p => `
-        <div class="border rounded-xl p-3 bg-slate-50 space-y-2">
-          <div class="flex justify-between items-center">
-            <b class="text-xs text-slate-800">${esc(p.tasks?.title || 'Task Submission')}</b>
-            <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">+${p.tasks?.reward_points || 15} PTS</span>
+      const grid = document.getElementById('proofsGrid');
+      const feed = document.getElementById('overviewProofsFeed');
+      if (!items.length) {
+        const noHtml = emptyBox('No pending proofs to review');
+        grid.innerHTML = noHtml;
+        feed.innerHTML = noHtml;
+        return;
+      }
+
+      const html = items.map(p => `
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between space-y-3">
+          <div>
+            <div class="flex justify-between items-start">
+              <h5 class="text-xs font-black text-slate-800 line-clamp-1">${esc(p.tasks?.title || 'Proof')}</h5>
+              <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md font-bold">+${p.tasks?.reward_points || 15} PTS</span>
+            </div>
+            <p class="text-[11px] text-slate-500 font-semibold mt-1">Worker: <span class="text-slate-800 font-bold">@${esc(p.worker_handle)}</span></p>
           </div>
-          <p class="text-[11px] text-slate-500">Worker Handle: <b class="text-slate-800">@${esc(p.worker_handle)}</b></p>
           ${p.screenshot_url ? `
-            <a href="${esc(p.screenshot_url)}" target="_blank" rel="noopener noreferrer" class="block">
-              <img src="${esc(p.screenshot_url)}" class="w-full max-h-48 object-contain rounded-xl border bg-white shadow-sm" loading="lazy">
+            <a href="${esc(p.screenshot_url)}" target="_blank" class="block border rounded-xl overflow-hidden bg-white">
+              <img src="${esc(p.screenshot_url)}" class="w-full h-36 object-contain">
             </a>` : ''}
-          <div class="flex gap-2 pt-1">
-            <button onclick="decideProof('${p.id}', '${p.task_id}', '${p.worker_id}', ${p.tasks?.reward_points || 15}, 'approved')" class="flex-1 bg-emerald-600 text-white rounded-lg py-2 text-xs font-bold active:scale-95 transition">Approve & Credit</button>
-            <button onclick="decideProof('${p.id}', '${p.task_id}', '${p.worker_id}', 0, 'rejected')" class="flex-1 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg py-2 text-xs font-bold active:scale-95 transition">Reject</button>
+          <div class="flex gap-2">
+            <button onclick="decideProof('${p.id}', '${p.task_id}', '${p.worker_id}', ${p.tasks?.reward_points || 15}, 'approved')" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition">Approve</button>
+            <button onclick="decideProof('${p.id}', '${p.task_id}', '${p.worker_id}', 0, 'rejected')" class="flex-1 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition">Reject</button>
           </div>
         </div>
       `).join('');
+
+      grid.innerHTML = html;
+      feed.innerHTML = html;
     }
 
     function renderDeposits(items) {
-      const container = document.getElementById('deposits');
-      if (!items.length) { container.innerHTML = empty('No pending deposits'); return; }
-      container.innerHTML = items.map(d => `
-        <div class="border rounded-xl p-3 bg-slate-50 space-y-1">
-          <div class="flex justify-between">
-            <b class="text-xs uppercase text-slate-900">${esc(d.gateway || 'Method')} • ৳${Number(d.amount_bdt || 0).toFixed(2)}</b>
-            <span class="text-[10px] text-emerald-600 font-bold">+${d.points} PTS</span>
+      const container = document.getElementById('depositsTable');
+      const feed = document.getElementById('overviewDepositsFeed');
+      if (!items.length) {
+        const noHtml = emptyBox('No inbound deposit requests');
+        container.innerHTML = noHtml;
+        feed.innerHTML = noHtml;
+        return;
+      }
+
+      const html = items.map(d => `
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-center justify-between">
+          <div>
+            <span class="text-xs font-black uppercase text-slate-900">${esc(d.gateway)} • ৳${Number(d.amount_bdt).toFixed(2)}</span>
+            <p class="text-[11px] text-slate-500 font-medium">From: @${esc(d.profiles?.username || 'User')} • TrxID: <span class="font-mono bg-white px-1.5 py-0.5 border rounded">${esc(d.trx_id)}</span></p>
           </div>
-          <p class="text-[10px] text-slate-500">User: <b>@${esc(d.profiles?.username || 'User')}</b> • TrxID: <span class="font-mono bg-white px-1.5 py-0.5 border rounded">${esc(d.trx_id || 'N/A')}</span></p>
-          <div class="flex gap-2 mt-2">
-            <button onclick="decideDeposit('${d.id}', '${d.user_id}', ${d.points}, 'completed')" class="flex-1 bg-emerald-600 text-white rounded-lg py-1.5 text-xs font-bold active:scale-95 transition">Approve Deposit</button>
-            <button onclick="decideDeposit('${d.id}', '${d.user_id}', 0, 'rejected')" class="flex-1 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg py-1.5 text-xs font-bold active:scale-95 transition">Reject</button>
+          <div class="flex items-center gap-2">
+            <button onclick="decideDeposit('${d.id}', '${d.user_id}', ${d.points}, 'completed')" class="px-3.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold">Approve</button>
+            <button onclick="decideDeposit('${d.id}', '${d.user_id}', 0, 'rejected')" class="px-3.5 py-1.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg text-xs font-bold">Reject</button>
           </div>
         </div>
       `).join('');
+
+      container.innerHTML = html;
+      feed.innerHTML = html;
     }
 
     function renderWithdrawals(items) {
-      const container = document.getElementById('withdrawals');
-      if (!items.length) { container.innerHTML = empty('No pending withdrawals'); return; }
+      const container = document.getElementById('withdrawalsTable');
+      if (!items.length) { container.innerHTML = emptyBox('No payout requests'); return; }
       container.innerHTML = items.map(w => `
-        <div class="border rounded-xl p-3 bg-slate-50 space-y-1">
-          <div class="flex justify-between">
-            <b class="text-xs uppercase text-slate-900">${esc(w.gateway || 'Method')} • ৳${Number(w.amount_bdt || 0).toFixed(2)}</b>
-            <span class="text-[10px] text-rose-600 font-bold">-${w.points} PTS</span>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-center justify-between">
+          <div>
+            <span class="text-xs font-black uppercase text-slate-900">${esc(w.gateway)} • ৳${Number(w.amount_bdt).toFixed(2)} (${w.points} PTS)</span>
+            <p class="text-[11px] text-slate-500 font-medium">To: @${esc(w.profiles?.username || 'User')}</p>
           </div>
-          <p class="text-[10px] text-slate-500">User: <b>@${esc(w.profiles?.username || 'User')}</b></p>
-          <div class="flex gap-2 mt-2">
-            <button onclick="decideWithdrawal('${w.id}', '${w.user_id}', ${w.points}, 'completed')" class="flex-1 bg-emerald-600 text-white rounded-lg py-1.5 text-xs font-bold active:scale-95 transition">Mark Paid</button>
-            <button onclick="decideWithdrawal('${w.id}', '${w.user_id}', ${w.points}, 'rejected')" class="flex-1 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg py-1.5 text-xs font-bold active:scale-95 transition">Reject & Refund</button>
+          <div class="flex items-center gap-2">
+            <button onclick="decideWithdrawal('${w.id}', '${w.user_id}', ${w.points}, 'completed')" class="px-3.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold">Mark Paid</button>
+            <button onclick="decideWithdrawal('${w.id}', '${w.user_id}', ${w.points}, 'rejected')" class="px-3.5 py-1.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg text-xs font-bold">Reject</button>
           </div>
         </div>
       `).join('');
     }
 
     function renderKyc(items) {
-      const container = document.getElementById('kyc');
-      if (!items.length) { container.innerHTML = empty('No pending KYC submissions'); return; }
+      const container = document.getElementById('kycGrid');
+      if (!items.length) { container.innerHTML = emptyBox('No pending KYC verifications'); return; }
       container.innerHTML = items.map(k => `
-        <div class="border rounded-xl p-3 bg-slate-50 space-y-2">
-          <div class="flex justify-between">
-            <b class="text-xs">${esc(k.profiles?.full_name || 'User')} • ${esc(k.id_type?.toUpperCase())}</b>
-            <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">@${esc(k.profiles?.username)}</span>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+          <div class="flex justify-between items-start">
+            <div>
+              <h5 class="text-xs font-black text-slate-900">${esc(k.profiles?.full_name)}</h5>
+              <p class="text-[11px] text-slate-500">Doc: <b class="font-mono">${esc(k.id_type?.toUpperCase())} - ${esc(k.id_number)}</b></p>
+            </div>
+            <span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold">@${esc(k.profiles?.username)}</span>
           </div>
-          <p class="text-[10px] text-slate-500 font-mono">Doc No: ${esc(k.id_number)}</p>
           ${k.front_image ? `
-            <a href="${esc(k.front_image)}" target="_blank" class="text-[10px] text-indigo-600 font-bold underline block">View ID Document Image ↗</a>
-          ` : ''}
-          <div class="flex gap-2 mt-2">
-            <button onclick="decideKyc('${k.id}', '${k.user_id}', 'verified')" class="flex-1 bg-emerald-600 text-white rounded-lg py-1.5 text-xs font-bold active:scale-95 transition">Verify ID</button>
-            <button onclick="decideKyc('${k.id}', '${k.user_id}', 'rejected')" class="flex-1 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg py-1.5 text-xs font-bold active:scale-95 transition">Reject</button>
+            <a href="${esc(k.front_image)}" target="_blank" class="block border rounded-xl overflow-hidden bg-white">
+              <img src="${esc(k.front_image)}" class="w-full h-40 object-contain">
+            </a>` : ''}
+          <div class="flex gap-2">
+            <button onclick="decideKyc('${k.id}', '${k.user_id}', 'verified')" class="flex-1 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold">Verify User</button>
+            <button onclick="decideKyc('${k.id}', '${k.user_id}', 'rejected')" class="flex-1 py-2 bg-rose-50 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold">Reject</button>
           </div>
         </div>
       `).join('');
     }
 
     async function decideProof(proofId, taskId, workerId, rewardPoints, status) {
-      const { error: pErr } = await sb.from('proofs').update({ status }).eq('id', proofId);
-      if (pErr) return alert('Update failed: ' + pErr.message);
-
+      await sb.from('proofs').update({ status }).eq('id', proofId);
       if (status === 'approved') {
         const { data: t } = await sb.from('tasks').select('completed_count').eq('id', taskId).single();
         if (t) await sb.from('tasks').update({ completed_count: (t.completed_count || 0) + 1 }).eq('id', taskId);
@@ -284,20 +415,13 @@
         const { data: prof } = await sb.from('profiles').select('points').eq('id', workerId).single();
         if (prof) await sb.from('profiles').update({ points: (prof.points || 0) + rewardPoints }).eq('id', workerId);
 
-        await sb.from('transactions').insert([{
-          user_id: workerId,
-          type: 'reward',
-          points: rewardPoints,
-          status: 'completed'
-        }]);
+        await sb.from('transactions').insert([{ user_id: workerId, type: 'reward', points: rewardPoints, status: 'completed' }]);
       }
       loadAll();
     }
 
     async function decideDeposit(txId, userId, points, status) {
-      const { error } = await sb.from('transactions').update({ status }).eq('id', txId);
-      if (error) return alert(error.message);
-
+      await sb.from('transactions').update({ status }).eq('id', txId);
       if (status === 'completed') {
         const { data: prof } = await sb.from('profiles').select('points').eq('id', userId).single();
         if (prof) await sb.from('profiles').update({ points: (prof.points || 0) + points }).eq('id', userId);
@@ -306,9 +430,7 @@
     }
 
     async function decideWithdrawal(txId, userId, points, status) {
-      const { error } = await sb.from('transactions').update({ status }).eq('id', txId);
-      if (error) return alert(error.message);
-
+      await sb.from('transactions').update({ status }).eq('id', txId);
       if (status === 'rejected') {
         const { data: prof } = await sb.from('profiles').select('points').eq('id', userId).single();
         if (prof) await sb.from('profiles').update({ points: (prof.points || 0) + points }).eq('id', userId);
@@ -317,12 +439,8 @@
     }
 
     async function decideKyc(kycId, userId, status) {
-      const { error } = await sb.from('kyc_records').update({ status }).eq('id', kycId);
-      if (error) return alert(error.message);
-
-      if (status === 'verified') {
-        await sb.from('profiles').update({ is_verified: true }).eq('id', userId);
-      }
+      await sb.from('kyc_records').update({ status }).eq('id', kycId);
+      if (status === 'verified') await sb.from('profiles').update({ is_verified: true }).eq('id', userId);
       loadAll();
     }
 
@@ -336,44 +454,42 @@
       if (isUuid) query = query.eq('id', q);
       else query = query.or(`username.ilike.%${q}%,full_name.ilike.%${q}%`);
 
-      const { data, error } = await query.limit(1).single();
-      if (error || !data) { container.innerHTML = empty('User not found'); return; }
+      const { data } = await query.limit(1).single();
+      if (!data) { container.innerHTML = emptyBox('User account not found'); return; }
 
       container.innerHTML = `
-        <div class="border rounded-xl p-4 bg-slate-50 space-y-3">
-          <div class="flex justify-between items-center">
+        <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50 space-y-4 max-w-xl">
+          <div class="flex justify-between items-start">
             <div>
-              <b class="text-sm text-slate-900">${esc(data.full_name)} (@${esc(data.username)})</b>
-              <p class="text-[10px] text-slate-400 font-mono">UUID: ${esc(data.id)}</p>
+              <h4 class="text-sm font-black text-slate-900">${esc(data.full_name)} (@${esc(data.username)})</h4>
+              <p class="text-[10px] text-slate-400 font-mono mt-0.5">UUID: ${esc(data.id)}</p>
             </div>
-            <span class="text-xs px-2.5 py-1 rounded-full font-bold ${data.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-200 text-slate-700'}">${data.role?.toUpperCase()}</span>
+            <span class="text-[10px] px-2.5 py-1 rounded-full font-bold ${data.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-200 text-slate-700'}">${data.role?.toUpperCase()}</span>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-slate-600">Points:</span>
-            <input id="targetUserPts" type="number" value="${data.points || 0}" class="border rounded-xl px-3 py-1.5 text-xs font-black w-32 focus:outline-none focus:border-indigo-600">
-            <button onclick="updateUserBalance('${data.id}')" class="px-4 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold active:scale-95 transition">Update Balance</button>
-            <button onclick="toggleUserRole('${data.id}', '${data.role}')" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-bold active:scale-95 transition">Toggle Role</button>
+          <div class="flex items-center gap-3">
+            <input id="targetUserPts" type="number" value="${data.points || 0}" class="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-black w-36">
+            <button onclick="updateBalance('${data.id}')" class="px-4 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow">Save PTS</button>
+            <button onclick="toggleRole('${data.id}', '${data.role}')" class="px-4 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold">Change Role</button>
           </div>
         </div>
       `;
     }
 
-    async function updateUserBalance(userId) {
+    async function updateBalance(userId) {
       const pts = parseInt(document.getElementById('targetUserPts').value, 10);
-      if (isNaN(pts) || pts < 0) return alert('Invalid points');
-      const { error } = await sb.from('profiles').update({ points: pts }).eq('id', userId);
-      if (error) alert('Update error: ' + error.message);
-      else { alert('Balance updated.'); loadUser(); }
+      await sb.from('profiles').update({ points: pts }).eq('id', userId);
+      alert('Balance saved!');
+      loadUser();
     }
 
-    async function toggleUserRole(userId, currentRole) {
+    async function toggleRole(userId, currentRole) {
       const newRole = currentRole === 'admin' ? 'user' : 'admin';
-      const { error } = await sb.from('profiles').update({ role: newRole }).eq('id', userId);
-      if (error) alert('Role update error: ' + error.message);
-      else { alert(`User role updated to ${newRole}`); loadUser(); }
+      await sb.from('profiles').update({ role: newRole }).eq('id', userId);
+      alert('Role switched to ' + newRole);
+      loadUser();
     }
 
-    document.addEventListener('DOMContentLoaded', initAdminAuth);
+    document.addEventListener('DOMContentLoaded', initAdmin);
   </script>
 </body>
 </html>
