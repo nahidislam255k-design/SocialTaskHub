@@ -204,10 +204,6 @@
             </div>
           </div>
 
-          <div class="flex justify-end -mt-1">
-            <button type="button" onclick="openPasswordReset()" class="text-[10px] font-bold text-indigo-600 hover:underline">Forgot password?</button>
-          </div>
-
           <button type="submit" class="w-full py-3.5 grad-primary text-white rounded-xl text-xs font-black shadow-md active:scale-95 transition flex items-center justify-center gap-2">
             <span>Sign In to Account</span> <i class="fa-solid fa-arrow-right text-xs"></i>
           </button>
@@ -430,7 +426,7 @@
         </div>
 
         <div id="subViewDirectMessages" class="space-y-2.5">
-          <div onclick="openDirectChatFromList('support_desk')" class="app-card p-3.5 flex items-center justify-between cursor-pointer hover:border-indigo-200 active:scale-[0.99] transition">
+          <div class="app-card p-3.5 flex items-center justify-between cursor-pointer hover:border-indigo-200 active:scale-[0.99] transition">
             <div class="flex items-center gap-3">
               <div class="relative">
                 <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="w-11 h-11 rounded-2xl object-cover ring-2 ring-indigo-50" />
@@ -472,9 +468,6 @@
         <div class="vip-hero-banner p-4 text-white cursor-pointer" onclick="openSelfProfileModal()">
           <div class="flex items-center justify-between">
             <div id="profileBadgeTag"></div>
-            <button onclick="event.stopPropagation(); openSelfProfileModal()" class="w-8 h-8 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-xs active:scale-90 transition">
-              <i class="fa-solid fa-pen"></i>
-            </button>
           </div>
 
           <div class="flex items-center gap-3.5 mt-3">
@@ -768,8 +761,8 @@
 
   <!-- ================= SUPABASE CLIENT SCRIPT ================= -->
   <script>
-    // Supabase Credentials
-    const SUPABASE_URL = 'https://yijfsuiuhtfhzqasfjp.supabase.co';
+    // Supabase Correct Credentials
+    const SUPABASE_URL = 'https://yijjfsuiuhtfhzqasfjp.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlpampmc3VpdWh0Zmh6cWFzZmpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MzYzODUsImV4cCI6MjEwNDIxMjM4NX0.ksHTXtTABkjKyaTQcjyrsHafxDYbQLk55IzyW2IZhtw';
     
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -890,7 +883,6 @@
       }
 
       if (data?.user) {
-        // Create initial profile in public.profiles table
         const { error: profError } = await sb.from('profiles').insert([{
           id: data.user.id,
           full_name,
