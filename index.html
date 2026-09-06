@@ -1196,27 +1196,36 @@
       e.preventDefault();
       const pts = parseInt(document.getElementById('withdrawPtsInput').value, 10);
       const gateway = document.getElementById('withdrawGateway').value;
+      const payoutAddress = document.getElementById('withdrawAccount').value.trim();
 
-      if (userProfile.points < pts) {
+      if (!Number.isFinite(pts) || pts <= 0) {
+        return alert('Please enter a valid withdrawal amount.');
+      }
+
+      if (Number(userProfile.points || 0) < pts) {
         return alert('Insufficient points balance!');
       }
 
-      const { error } = await sb.from('transactions').insert([{
-        user_id: currentUser.id,
-        type: 'withdrawal',
-        points: pts,
-        amount_bdt: pts / 10,
-        gateway: gateway,
-        status: 'pending'
-      }]);
+      // Supabase RPC দিয়ে অ্যাটমিক ব্যালেন্স ডিডাকশন ও ট্রানজ্যাকশন ইনসার্ট
+      const { data, error } = await sb.rpc('process_withdrawal', {
+        p_user_id: currentUser.id,
+        p_points: Number(pts),
+        p_gateway: gateway,
+        p_account: payoutAddress
+      });
 
-      if (error) {
-        alert('Withdrawal request failed: ' + error.message);
-      } else {
-        alert('Withdrawal request placed successfully.');
-        closeModal('withdrawModal');
-        e.target.reset();
+      if (error || !data?.success) {
+        alert('Withdrawal failed: ' + (error?.message || data?.message || 'Unknown error'));
+        return;
       }
+
+      // সাথে সাথে ইউজার ব্যালেন্স ও ইউআই আপডেট
+      userProfile.points = data.new_balance;
+      syncProfileUI();
+
+      alert('Withdrawal request placed and points deducted successfully!');
+      closeModal('withdrawModal');
+      e.target.reset();
     }
 
     function openKycCenter() {
